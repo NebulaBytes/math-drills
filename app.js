@@ -35,6 +35,36 @@ function initMute() {
   });
 }
 
+function initTheme() {
+  const btn = document.getElementById('btn-theme');
+  const popover = document.getElementById('theme-popover');
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    popover.classList.toggle('open');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!popover.contains(e.target) && e.target !== btn) {
+      popover.classList.remove('open');
+    }
+  });
+
+  document.querySelectorAll('.theme-swatch').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      const theme = swatch.dataset.theme;
+      if (theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('mathdrills-theme', theme);
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.removeItem('mathdrills-theme');
+      }
+      popover.classList.remove('open');
+    });
+  });
+}
+
 function initSpeedSetup() {
   const opChips = document.querySelectorAll('#speed-op-chips .chip');
   const tablesWrap = document.getElementById('speed-tables-wrap');
@@ -255,6 +285,7 @@ document.querySelectorAll('.btn.secondary[data-home]').forEach(btn => {
 
 initHome();
 initMute();
+initTheme();
 initSpeedSetup();
 initNumpad();
 initAdvancedSetup();

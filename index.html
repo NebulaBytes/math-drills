@@ -4,13 +4,38 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Math Drills</title>
+<script>
+  (function () {
+    var saved = localStorage.getItem('mathdrills-theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+  })();
+</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
   <header class="topbar">
     <h1 class="logo">🧮 Math Drills</h1>
-    <button id="btn-mute" class="icon-btn" title="Mute">🔊</button>
+    <div class="topbar-actions">
+      <button id="btn-mute" class="icon-btn" title="Mute">🔊</button>
+      <div class="theme-wrap">
+        <button id="btn-theme" class="icon-btn" title="Theme">🎨</button>
+        <div id="theme-popover" class="theme-popover">
+          <button class="theme-swatch" data-theme="" style="background: linear-gradient(135deg,#7c3aed,#f472b6)">
+            <span class="theme-name">Purple Pop</span>
+          </button>
+          <button class="theme-swatch" data-theme="ocean" style="background: linear-gradient(135deg,#2563eb,#22d3ee)">
+            <span class="theme-name">Ocean Blue</span>
+          </button>
+          <button class="theme-swatch" data-theme="sunset" style="background: linear-gradient(135deg,#f97316,#f43f5e)">
+            <span class="theme-name">Sunset Orange</span>
+          </button>
+          <button class="theme-swatch" data-theme="forest" style="background: linear-gradient(135deg,#16a34a,#84cc16)">
+            <span class="theme-name">Forest Green</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </header>
 
   <main id="screens">
