@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Speed Drills</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <h1 class="logo">🧮 Math Speed Drills</h1>
+    <button id="btn-mute" class="icon-btn" title="Mute">🔊</button>
+  </header>
+
+  <main id="screens">
+
+    <section id="screen-home" class="screen active">
+      <h2>Pick a mode</h2>
+      <div class="mode-grid">
+        <button class="mode-card" data-mode="speed">
+          <span class="mode-emoji">⚡</span>
+          <span class="mode-title">Speed Drill</span>
+          <span class="mode-desc">Fast mental math against the clock</span>
+        </button>
+        <button class="mode-card" data-mode="advanced">
+          <span class="mode-emoji">🧠</span>
+          <span class="mode-title">Advanced Mode</span>
+          <span class="mode-desc">Step-by-step multi-digit practice</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- SPEED DRILL SETUP -->
+    <section id="screen-speed-setup" class="screen">
+      <h2>⚡ Speed Drill Setup</h2>
+      <div class="card">
+        <span class="field-label">Operation</span>
+        <div class="chip-grid" id="speed-op-chips">
+          <button class="chip" data-value="add">+</button>
+          <button class="chip" data-value="sub">−</button>
+          <button class="chip selected" data-value="mul">×</button>
+          <button class="chip" data-value="div">÷</button>
+          <button class="chip" data-value="mixed">Mixed</button>
+        </div>
+
+        <div id="speed-tables-wrap">
+          <span class="field-label">Times tables to include</span>
+          <div class="chip-grid" id="speed-tables-chips">
+            <button class="chip selected" data-value="2">2</button>
+            <button class="chip selected" data-value="3">3</button>
+            <button class="chip selected" data-value="4">4</button>
+            <button class="chip selected" data-value="5">5</button>
+            <button class="chip selected" data-value="6">6</button>
+            <button class="chip selected" data-value="7">7</button>
+            <button class="chip selected" data-value="8">8</button>
+            <button class="chip selected" data-value="9">9</button>
+            <button class="chip selected" data-value="10">10</button>
+            <button class="chip selected" data-value="11">11</button>
+            <button class="chip selected" data-value="12">12</button>
+          </div>
+        </div>
+
+        <div id="speed-range-wrap" style="display:none;">
+          <span class="field-label">Number range</span>
+          <div class="chip-grid" id="speed-range-chips">
+            <button class="chip selected" data-value="10">Up to 10</button>
+            <button class="chip" data-value="20">Up to 20</button>
+            <button class="chip" data-value="100">Up to 100</button>
+          </div>
+        </div>
+
+        <span class="field-label">Timed or untimed?</span>
+        <div class="chip-grid" id="speed-mode-chips">
+          <button class="chip selected" data-value="timed">Timed</button>
+          <button class="chip" data-value="untimed">Untimed</button>
+        </div>
+
+        <div id="speed-duration-wrap">
+          <span class="field-label">Duration</span>
+          <div class="chip-grid" id="speed-duration-chips">
+            <button class="chip" data-value="30">30s</button>
+            <button class="chip selected" data-value="60">60s</button>
+            <button class="chip" data-value="120">120s</button>
+          </div>
+        </div>
+
+        <div id="speed-count-wrap" style="display:none;">
+          <span class="field-label">Number of questions</span>
+          <div class="chip-grid" id="speed-count-chips">
+            <button class="chip selected" data-value="10">10</button>
+            <button class="chip" data-value="15">15</button>
+            <button class="chip" data-value="20">20</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn secondary" data-home>Back</button>
+        <button class="btn" id="btn-speed-start">Start</button>
+      </div>
+    </section>
+
+    <!-- SPEED DRILL PLAY -->
+    <section id="screen-speed-play" class="screen">
+      <div class="hud">
+        <span class="streak" id="speed-streak">🔥 0</span>
+        <span id="speed-progress">Score: 0</span>
+        <span class="timer" id="speed-timer">⏱ 60s</span>
+      </div>
+
+      <div class="question-card" id="speed-question-card">
+        <div class="question-text" id="speed-question-text">? × ?</div>
+        <div class="answer-display" id="speed-answer-display"></div>
+      </div>
+
+      <div class="numpad" id="speed-numpad">
+        <button data-digit="1">1</button>
+        <button data-digit="2">2</button>
+        <button data-digit="3">3</button>
+        <button data-digit="4">4</button>
+        <button data-digit="5">5</button>
+        <button data-digit="6">6</button>
+        <button data-digit="7">7</button>
+        <button data-digit="8">8</button>
+        <button data-digit="9">9</button>
+        <button id="btn-backspace">⌫</button>
+        <button data-digit="0">0</button>
+        <button id="btn-submit">✓</button>
+      </div>
+    </section>
+
+    <!-- SPEED DRILL RESULTS -->
+    <section id="screen-speed-results" class="screen">
+      <h2>Nice work! 🎉</h2>
+      <div class="card results-summary" id="speed-results-body"></div>
+      <div class="btn-row">
+        <button class="btn secondary" data-home>Home</button>
+        <button class="btn" id="btn-speed-again">Play Again</button>
+      </div>
+    </section>
+
+    <!-- ADVANCED SETUP -->
+    <section id="screen-advanced-setup" class="screen">
+      <h2>🧠 Advanced Mode Setup</h2>
+      <div class="card">
+        <span class="field-label">Operation</span>
+        <div class="chip-grid">
+          <button class="chip selected">Carry-over Addition</button>
+          <button class="chip coming-soon" disabled>Borrow Subtraction</button>
+          <button class="chip coming-soon" disabled>Long Division</button>
+          <button class="chip coming-soon" disabled>Long Multiplication</button>
+        </div>
+
+        <span class="field-label">Digit length</span>
+        <div class="chip-grid" id="advanced-digit-chips">
+          <button class="chip" data-value="2">2-digit</button>
+          <button class="chip selected" data-value="3">3-digit</button>
+          <button class="chip" data-value="4">4-digit</button>
+        </div>
+
+        <span class="field-label">Number of problems</span>
+        <div class="chip-grid" id="advanced-count-chips">
+          <button class="chip selected" data-value="5">5</button>
+          <button class="chip" data-value="10">10</button>
+          <button class="chip" data-value="15">15</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn secondary" data-home>Back</button>
+        <button class="btn" id="btn-advanced-start">Start</button>
+      </div>
+    </section>
+
+    <!-- ADVANCED PLAY -->
+    <section id="screen-advanced-play" class="screen">
+      <div class="hud">
+        <span id="advanced-progress">Problem 1 / 5</span>
+      </div>
+      <div class="card" style="text-align:center;" id="advanced-board"></div>
+    </section>
+
+    <!-- ADVANCED RESULTS -->
+    <section id="screen-advanced-results" class="screen">
+      <h2>Great job! 🌟</h2>
+      <div class="card results-summary" id="advanced-results-body"></div>
+      <div class="btn-row">
+        <button class="btn secondary" data-home>Home</button>
+        <button class="btn" id="btn-advanced-again">Play Again</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
