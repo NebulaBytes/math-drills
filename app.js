@@ -2,6 +2,7 @@ import { generateFact } from './problems.js';
 import { playDing, playBuzz, setMuted, isMuted } from './sounds.js';
 import { showScreen } from './nav.js';
 import { initAdvancedSetup } from './advanced.js';
+import { celebrate } from './celebrate.js';
 
 const speedConfig = {
   operation: 'mul',
@@ -262,6 +263,7 @@ function endSpeedRun() {
     </div>
   `;
   showScreen('screen-speed-results');
+  celebrate();
 }
 
 function initNumpad() {

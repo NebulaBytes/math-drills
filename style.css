@@ -437,3 +437,48 @@ input.hidden-input {
 
 .divider-line { border-bottom: 4px solid var(--text); width: 100%; }
 
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease;
+}
+.celebration-overlay.fade-out { opacity: 0; }
+
+.confetti-field { position: absolute; inset: 0; }
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation-name: confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(600deg); opacity: 0.9; }
+}
+
+.celebration-banner {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: white;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  padding: 22px 36px;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: banner-pop 0.6s cubic-bezier(.34,1.56,.64,1);
+  text-align: center;
+  max-width: 90vw;
+}
+@keyframes banner-pop {
+  0% { transform: scale(0) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.15) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
+}
+

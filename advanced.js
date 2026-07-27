@@ -1,6 +1,7 @@
 import { generateCarryAddition } from './problems.js';
 import { playDing, playBuzz, playCelebration } from './sounds.js';
 import { showScreen } from './nav.js';
+import { celebrate } from './celebrate.js';
 
 let config = { digitLength: 3, numProblems: 5 };
 let run = null;
@@ -201,6 +202,7 @@ function showAdvancedResults() {
     </div>
   `;
   showScreen('screen-advanced-results');
+  celebrate();
 }
 
 export function initAdvancedSetup() {
