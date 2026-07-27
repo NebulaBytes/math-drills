@@ -86,14 +86,14 @@
 }
 
 :root[data-theme="pink"] {
-  --accent: #ec4899;
-  --accent-dark: #be185d;
-  --accent-2: #c084fc;
-  --accent-rgb: 236, 72, 153;
-  --accent-2-rgb: 192, 132, 252;
+  --accent: #db2777;
+  --accent-dark: #831843;
+  --accent-2: #f9a8d4;
+  --accent-rgb: 219, 39, 119;
+  --accent-2-rgb: 249, 168, 212;
   --accent-tint: #fce7f3;
   --accent-tint-hover: #fbcfe8;
-  --bg-grad: linear-gradient(160deg, #fce7f3 0%, #fae8ff 100%);
+  --bg-grad: linear-gradient(160deg, #fce7f3 0%, #fbcfe8 100%);
 }
 
 :root[data-theme="sand"] {
