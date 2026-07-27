@@ -197,8 +197,14 @@ h2 { text-align: center; font-size: 1.6rem; margin-bottom: 20px; }
 }
 
 .question-text { font-size: 3rem; font-weight: 800; letter-spacing: 2px; }
-.answer-display {
+.answer-row {
   margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.answer-display {
   font-size: 3rem;
   font-weight: 800;
   background: rgba(255,255,255,0.2);
@@ -207,6 +213,14 @@ h2 { text-align: center; font-size: 1.6rem; margin-bottom: 20px; }
   padding: 4px 24px;
   display: inline-block;
   min-width: 2ch;
+  transition: background 0.15s;
+}
+.answer-display.wrong { background: var(--red); }
+.correct-reveal {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--green);
+  min-width: 1ch;
 }
 
 .numpad {

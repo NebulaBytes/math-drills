@@ -4,6 +4,7 @@ import { showScreen } from './nav.js';
 
 let config = { digitLength: 3, numProblems: 5 };
 let run = null;
+let activeInput = null;
 
 function buildSteps(problem) {
   const { digitLength, carryOut, resultDigit, finalCarry } = problem;
@@ -117,6 +118,7 @@ function wireStep(state) {
   input.classList.add('active');
   input.value = '';
   input.focus();
+  activeInput = input;
   let missedThisStep = false;
 
   input.oninput = () => {
@@ -230,5 +232,13 @@ export function initAdvancedSetup() {
     run = { problemsCompleted: 0, totalSteps: 0, totalFirstTryCorrect: 0, totalMistakes: 0 };
     showScreen('screen-advanced-play');
     startProblem(0);
+  });
+
+  document.querySelectorAll('#advanced-numpad [data-digit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!activeInput || activeInput.disabled) return;
+      activeInput.value = btn.dataset.digit;
+      activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
   });
 }

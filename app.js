@@ -161,7 +161,8 @@ function nextSpeedQuestion() {
   currentFact = generateFact(speedConfig.operation, speedConfig);
   document.getElementById('speed-question-text').textContent = currentFact.text;
   document.getElementById('speed-answer-display').textContent = '';
-  document.getElementById('speed-answer-display').style.color = '';
+  document.getElementById('speed-answer-display').classList.remove('wrong');
+  document.getElementById('speed-correct-reveal').textContent = '';
   const card = document.getElementById('speed-question-card');
   card.classList.remove('wrong-shake', 'correct-pop');
   updateProgress();
@@ -201,8 +202,8 @@ function submitAnswer() {
     speedRun.streak = 0;
     playBuzz();
     card.classList.add('wrong-shake');
-    display.style.color = '#ffe3e3';
-    display.textContent = `${answerBuffer} → ${currentFact.answer}`;
+    display.classList.add('wrong');
+    document.getElementById('speed-correct-reveal').textContent = currentFact.answer;
     updateStreakAndTimer();
     setTimeout(advanceOrEnd, 700);
   }
