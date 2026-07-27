@@ -3,17 +3,8 @@ import { playDing, playBuzz, playCelebration } from './sounds.js';
 import { showScreen } from './nav.js';
 import { celebrate } from './celebrate.js';
 
-const OPERATIONS = {
-  add: { generate: generateCarryAddition, operator: '+', hasExtraColumn: true },
-  sub: { generate: generateBorrowSubtraction, operator: '−', hasExtraColumn: false }
-};
-
-let config = { operation: 'add', digitLength: 3, numProblems: 5 };
-let run = null;
-let activeInput = null;
-
-function buildSteps(problem, hasExtraColumn) {
-  const { digitLength, transferOut, resultDigit, finalTransfer } = problem;
+function buildAdditionSteps(problem) {
+  const { digitLength, transferOut, resultDigit } = problem;
   const steps = [];
   for (let i = 0; i < digitLength; i++) {
     steps.push({ type: 'result', col: i, expected: resultDigit[i] });
@@ -21,11 +12,68 @@ function buildSteps(problem, hasExtraColumn) {
       steps.push({ type: 'carry', col: i + 1, expected: 1 });
     }
   }
-  if (hasExtraColumn && finalTransfer === 1) {
-    steps.push({ type: 'result', col: digitLength, expected: finalTransfer });
+  if (problem.finalTransfer === 1) {
+    steps.push({ type: 'result', col: digitLength, expected: problem.finalTransfer });
   }
   return steps;
 }
+
+function buildSubtractionSteps(problem) {
+  const { digitLength, transferIn, resultDigit, digitsA } = problem;
+  const steps = [];
+  for (let i = 0; i < digitLength; i++) {
+    if (transferIn[i] === 1) {
+      steps.push({ type: 'reduce', col: i, expected: digitsA[i] - 1 });
+    }
+    steps.push({ type: 'result', col: i, expected: resultDigit[i] });
+  }
+  return steps;
+}
+
+function additionHint(problem, step) {
+  const { digitsA, digitsB, transferIn } = problem;
+  if (step.type === 'carry') {
+    return `Carry the 1! Write it above the next column.`;
+  }
+  const carried = transferIn[step.col] === 1;
+  return carried
+    ? `Add this column, plus the 1 you carried: ${digitsA[step.col]} + ${digitsB[step.col]} + 1`
+    : `Add this column: ${digitsA[step.col]} + ${digitsB[step.col]}`;
+}
+
+function subtractionHint(problem, step) {
+  const { digitsA, digitsB, transferIn, transferOut } = problem;
+  if (step.type === 'reduce') {
+    return `Borrowing! This column lends 1, so ${digitsA[step.col]} becomes ${digitsA[step.col] - 1}.`;
+  }
+  const col = step.col;
+  const base = transferIn[col] === 1 ? digitsA[col] - 1 : digitsA[col];
+  if (transferOut[col] === 1) {
+    return `Not enough here — borrow 10 from the next column! Now find ${base + 10} − ${digitsB[col]}.`;
+  }
+  return `Subtract this column: ${base} − ${digitsB[col]}`;
+}
+
+const OPERATIONS = {
+  add: {
+    generate: generateCarryAddition,
+    operator: '+',
+    hasExtraColumn: true,
+    buildSteps: buildAdditionSteps,
+    hint: additionHint
+  },
+  sub: {
+    generate: generateBorrowSubtraction,
+    operator: '−',
+    hasExtraColumn: false,
+    buildSteps: buildSubtractionSteps,
+    hint: subtractionHint
+  }
+};
+
+let config = { operation: 'add', digitLength: 3, numProblems: 5 };
+let run = null;
+let activeInput = null;
 
 function renderColumnBoard(problem, operatorSymbol, hasExtraColumn) {
   const { digitsA, digitsB, digitLength } = problem;
@@ -45,6 +93,7 @@ function renderColumnBoard(problem, operatorSymbol, hasExtraColumn) {
 
   const resultInputs = {};
   const carryInputs = {};
+  const digitACells = {};
 
   // operator column
   const opStack = document.createElement('div');
@@ -77,7 +126,13 @@ function renderColumnBoard(problem, operatorSymbol, hasExtraColumn) {
 
     const digitA = document.createElement('div');
     digitA.className = 'digit-box' + (isExtra ? ' blank' : '');
-    digitA.textContent = isExtra ? '' : digitsA[i];
+    if (!isExtra) {
+      const valueSpan = document.createElement('span');
+      valueSpan.className = 'digit-value';
+      valueSpan.textContent = digitsA[i];
+      digitA.appendChild(valueSpan);
+      digitACells[i] = valueSpan;
+    }
     stack.appendChild(digitA);
 
     const digitB = document.createElement('div');
@@ -104,7 +159,47 @@ function renderColumnBoard(problem, operatorSymbol, hasExtraColumn) {
   frame.appendChild(dividerWrap);
   frame.appendChild(bottomBoard);
 
-  return { frame, resultInputs, carryInputs };
+  return { frame, resultInputs, carryInputs, digitACells };
+}
+
+function activateStep(state, step, onReady) {
+  const hintEl = document.getElementById('advanced-hint');
+  const isBoost = step.type === 'result' && state.operationKey === 'sub' &&
+    state.problem.transferOut[step.col] === 1;
+
+  if (isBoost) {
+    const { transferIn, digitsA, digitsB } = state.problem;
+    const col = step.col;
+    const base = transferIn[col] === 1 ? digitsA[col] - 1 : digitsA[col];
+    hintEl.textContent = `${base} is smaller than ${digitsB[col]} — we need to borrow!`;
+    setTimeout(() => {
+      const effective = base + 10;
+      const cell = state.digitACells[col];
+      if (cell) {
+        cell.textContent = effective;
+        cell.classList.remove('struck');
+        cell.classList.add('boosted');
+      }
+      hintEl.textContent = `Borrowed 10! Now find ${effective} − ${digitsB[col]}.`;
+      onReady();
+    }, 1100);
+    return;
+  }
+
+  hintEl.textContent = state.opConfig.hint(state.problem, step);
+  if (step.type === 'reduce') {
+    const cell = state.digitACells[step.col];
+    if (cell) cell.classList.add('struck');
+  } else if (step.type === 'result' && state.operationKey === 'sub' && state.problem.transferIn[step.col] === 1) {
+    const { digitsA } = state.problem;
+    const cell = state.digitACells[step.col];
+    if (cell) {
+      cell.textContent = digitsA[step.col] - 1;
+      cell.classList.remove('struck');
+      cell.classList.add('boosted');
+    }
+  }
+  onReady();
 }
 
 function wireStep(state) {
@@ -121,38 +216,40 @@ function wireStep(state) {
     input.style.visibility = 'visible';
   }
 
-  input.disabled = false;
-  input.classList.add('active');
-  input.value = '';
-  input.focus();
-  activeInput = input;
-  let missedThisStep = false;
+  activateStep(state, step, () => {
+    input.disabled = false;
+    input.classList.add('active');
+    input.value = '';
+    input.focus();
+    activeInput = input;
+    let missedThisStep = false;
 
-  input.oninput = () => {
-    const val = input.value.replace(/[^0-9]/g, '');
-    input.value = val;
-    if (val === '') return;
-    const digit = parseInt(val, 10);
-    if (digit === step.expected) {
-      input.classList.remove('active', 'wrong');
-      input.classList.add('correct');
-      input.disabled = true;
-      playDing();
-      state.correctSteps++;
-      if (!missedThisStep) state.firstTryCorrect++;
-      state.stepIndex++;
-      setTimeout(() => wireStep(state), 200);
-    } else {
-      input.classList.add('wrong');
-      playBuzz();
-      state.mistakes++;
-      missedThisStep = true;
-      setTimeout(() => {
-        input.classList.remove('wrong');
-        input.value = '';
-      }, 400);
-    }
-  };
+    input.oninput = () => {
+      const val = input.value.replace(/[^0-9]/g, '');
+      input.value = val;
+      if (val === '') return;
+      const digit = parseInt(val, 10);
+      if (digit === step.expected) {
+        input.classList.remove('active', 'wrong');
+        input.classList.add('correct');
+        input.disabled = true;
+        playDing();
+        state.correctSteps++;
+        if (!missedThisStep) state.firstTryCorrect++;
+        state.stepIndex++;
+        setTimeout(() => wireStep(state), 200);
+      } else {
+        input.classList.add('wrong');
+        playBuzz();
+        state.mistakes++;
+        missedThisStep = true;
+        setTimeout(() => {
+          input.classList.remove('wrong');
+          input.value = '';
+        }, 400);
+      }
+    };
+  });
 }
 
 function finishProblem(state) {
@@ -167,15 +264,18 @@ function startProblem(problemIndex) {
 
   const opConfig = OPERATIONS[config.operation];
   const problem = opConfig.generate(config.digitLength);
-  const { frame, resultInputs, carryInputs } = renderColumnBoard(problem, opConfig.operator, opConfig.hasExtraColumn);
+  const { frame, resultInputs, carryInputs, digitACells } = renderColumnBoard(problem, opConfig.operator, opConfig.hasExtraColumn);
   board.appendChild(frame);
 
   const state = {
     problem,
-    steps: buildSteps(problem, opConfig.hasExtraColumn),
+    opConfig,
+    operationKey: config.operation,
+    steps: opConfig.buildSteps(problem),
     stepIndex: 0,
     resultInputs,
     carryInputs,
+    digitACells,
     correctSteps: 0,
     firstTryCorrect: 0,
     mistakes: 0,

@@ -96,8 +96,14 @@ export function generateBorrowSubtraction(digitLength) {
       transferOut[i] = borrow;
     }
     const hasAnyBorrow = transferOut.some(b => b === 1);
-    if (hasAnyBorrow) {
-      return { digitsA, digitsB, transferIn, transferOut, resultDigit, finalTransfer: 0, digitLength };
-    }
+    if (!hasAnyBorrow) continue;
+
+    // Skip cascading borrows through a zero digit (e.g. borrowing from a
+    // "0" column, which itself must borrow further left) - keeping the
+    // first version's borrow visual to a single reduce step per column.
+    const borrowsThroughZero = transferIn.some((t, i) => t === 1 && digitsA[i] === 0);
+    if (borrowsThroughZero) continue;
+
+    return { digitsA, digitsB, transferIn, transferOut, resultDigit, finalTransfer: 0, digitLength };
   }
 }

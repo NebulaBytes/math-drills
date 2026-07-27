@@ -408,6 +408,33 @@ h2 { text-align: center; font-size: 1.6rem; margin-bottom: 20px; }
 }
 .digit-box { background: var(--accent-tint); color: var(--accent-dark); }
 .digit-box.blank { visibility: hidden; }
+
+.digit-value { transition: color 0.2s; }
+.digit-value.struck {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--red);
+  opacity: 0.55;
+}
+.digit-value.boosted {
+  background: var(--accent);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 8px;
+  animation: pop 0.3s;
+}
+
+.advanced-hint {
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  text-align: center;
+  min-height: 1.4em;
+}
 .carry-box {
   width: 30px;
   height: 30px;
