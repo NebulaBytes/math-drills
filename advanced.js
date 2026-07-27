@@ -1,30 +1,36 @@
-import { generateCarryAddition } from './problems.js';
+import { generateCarryAddition, generateBorrowSubtraction } from './problems.js';
 import { playDing, playBuzz, playCelebration } from './sounds.js';
 import { showScreen } from './nav.js';
 import { celebrate } from './celebrate.js';
 
-let config = { digitLength: 3, numProblems: 5 };
+const OPERATIONS = {
+  add: { generate: generateCarryAddition, operator: '+', hasExtraColumn: true },
+  sub: { generate: generateBorrowSubtraction, operator: '−', hasExtraColumn: false }
+};
+
+let config = { operation: 'add', digitLength: 3, numProblems: 5 };
 let run = null;
 let activeInput = null;
 
-function buildSteps(problem) {
-  const { digitLength, carryOut, resultDigit, finalCarry } = problem;
+function buildSteps(problem, hasExtraColumn) {
+  const { digitLength, transferOut, resultDigit, finalTransfer } = problem;
   const steps = [];
   for (let i = 0; i < digitLength; i++) {
     steps.push({ type: 'result', col: i, expected: resultDigit[i] });
-    if (carryOut[i] === 1 && i + 1 <= digitLength - 1) {
+    if (transferOut[i] === 1 && i + 1 <= digitLength - 1) {
       steps.push({ type: 'carry', col: i + 1, expected: 1 });
     }
   }
-  if (finalCarry === 1) {
-    steps.push({ type: 'result', col: digitLength, expected: finalCarry });
+  if (hasExtraColumn && finalTransfer === 1) {
+    steps.push({ type: 'result', col: digitLength, expected: finalTransfer });
   }
   return steps;
 }
 
-function renderColumnBoard(problem) {
-  const { aDigits, bDigits, digitLength } = problem;
-  const order = [digitLength, ...Array.from({ length: digitLength }, (_, k) => digitLength - 1 - k)];
+function renderColumnBoard(problem, operatorSymbol, hasExtraColumn) {
+  const { digitsA, digitsB, digitLength } = problem;
+  const realColumns = Array.from({ length: digitLength }, (_, k) => digitLength - 1 - k);
+  const order = hasExtraColumn ? [digitLength, ...realColumns] : realColumns;
 
   const frame = document.createElement('div');
   frame.className = 'problem-frame';
@@ -46,7 +52,7 @@ function renderColumnBoard(problem) {
   opStack.innerHTML = `
     <div class="carry-box placeholder"></div>
     <div class="digit-box blank"></div>
-    <div class="digit-box" style="background:transparent;">+</div>
+    <div class="digit-box" style="background:transparent;">${operatorSymbol}</div>
   `;
   topBoard.appendChild(opStack);
 
@@ -56,7 +62,7 @@ function renderColumnBoard(problem) {
   bottomBoard.appendChild(opResultStack);
 
   order.forEach(i => {
-    const isExtra = i === digitLength;
+    const isExtra = hasExtraColumn && i === digitLength;
     const stack = document.createElement('div');
     stack.className = 'col-stack';
 
@@ -71,12 +77,12 @@ function renderColumnBoard(problem) {
 
     const digitA = document.createElement('div');
     digitA.className = 'digit-box' + (isExtra ? ' blank' : '');
-    digitA.textContent = isExtra ? '' : aDigits[i];
+    digitA.textContent = isExtra ? '' : digitsA[i];
     stack.appendChild(digitA);
 
     const digitB = document.createElement('div');
     digitB.className = 'digit-box' + (isExtra ? ' blank' : '');
-    digitB.textContent = isExtra ? '' : bDigits[i];
+    digitB.textContent = isExtra ? '' : digitsB[i];
     stack.appendChild(digitB);
 
     topBoard.appendChild(stack);
@@ -159,13 +165,14 @@ function startProblem(problemIndex) {
   document.getElementById('advanced-progress').textContent =
     `Problem ${problemIndex + 1} / ${config.numProblems}`;
 
-  const problem = generateCarryAddition(config.digitLength);
-  const { frame, resultInputs, carryInputs } = renderColumnBoard(problem);
+  const opConfig = OPERATIONS[config.operation];
+  const problem = opConfig.generate(config.digitLength);
+  const { frame, resultInputs, carryInputs } = renderColumnBoard(problem, opConfig.operator, opConfig.hasExtraColumn);
   board.appendChild(frame);
 
   const state = {
     problem,
-    steps: buildSteps(problem),
+    steps: buildSteps(problem, opConfig.hasExtraColumn),
     stepIndex: 0,
     resultInputs,
     carryInputs,
@@ -206,6 +213,15 @@ function showAdvancedResults() {
 }
 
 export function initAdvancedSetup() {
+  const opChips = document.querySelectorAll('#advanced-op-chips .chip[data-value]');
+  opChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      opChips.forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      config.operation = chip.dataset.value;
+    });
+  });
+
   const digitChips = document.querySelectorAll('#advanced-digit-chips .chip');
   digitChips.forEach(chip => {
     chip.addEventListener('click', () => {

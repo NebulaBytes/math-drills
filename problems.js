@@ -40,27 +40,64 @@ export function generateFact(operation, opts = {}) {
 
 export function generateCarryAddition(digitLength) {
   while (true) {
-    const aDigits = [];
-    const bDigits = [];
+    const digitsA = [];
+    const digitsB = [];
     for (let i = 0; i < digitLength; i++) {
       const isLeading = i === digitLength - 1;
-      aDigits.push(randInt(isLeading ? 1 : 0, 9));
-      bDigits.push(randInt(isLeading ? 1 : 0, 9));
+      digitsA.push(randInt(isLeading ? 1 : 0, 9));
+      digitsB.push(randInt(isLeading ? 1 : 0, 9));
     }
-    const carryIn = new Array(digitLength).fill(0);
-    const carryOut = new Array(digitLength).fill(0);
+    const transferIn = new Array(digitLength).fill(0);
+    const transferOut = new Array(digitLength).fill(0);
     const resultDigit = new Array(digitLength).fill(0);
     let carry = 0;
     for (let i = 0; i < digitLength; i++) {
-      carryIn[i] = carry;
-      const sum = aDigits[i] + bDigits[i] + carry;
+      transferIn[i] = carry;
+      const sum = digitsA[i] + digitsB[i] + carry;
       resultDigit[i] = sum % 10;
       carry = sum >= 10 ? 1 : 0;
-      carryOut[i] = carry;
+      transferOut[i] = carry;
     }
-    const hasAnyCarry = carryOut.some(c => c === 1);
+    const hasAnyCarry = transferOut.some(c => c === 1);
     if (hasAnyCarry) {
-      return { aDigits, bDigits, carryIn, carryOut, resultDigit, finalCarry: carry, digitLength };
+      return { digitsA, digitsB, transferIn, transferOut, resultDigit, finalTransfer: carry, digitLength };
+    }
+  }
+}
+
+export function generateBorrowSubtraction(digitLength) {
+  while (true) {
+    const digitsA = [];
+    const digitsB = [];
+    for (let i = 0; i < digitLength; i++) {
+      const isLeading = i === digitLength - 1;
+      digitsA.push(randInt(isLeading ? 1 : 0, 9));
+      digitsB.push(randInt(isLeading ? 1 : 0, 9));
+    }
+
+    const topNum = digitsA.reduceRight((acc, d) => acc * 10 + d, 0);
+    const bottomNum = digitsB.reduceRight((acc, d) => acc * 10 + d, 0);
+    if (topNum <= bottomNum) continue;
+
+    const transferIn = new Array(digitLength).fill(0);
+    const transferOut = new Array(digitLength).fill(0);
+    const resultDigit = new Array(digitLength).fill(0);
+    let borrow = 0;
+    for (let i = 0; i < digitLength; i++) {
+      transferIn[i] = borrow;
+      let top = digitsA[i] - borrow;
+      if (top < digitsB[i]) {
+        top += 10;
+        borrow = 1;
+      } else {
+        borrow = 0;
+      }
+      resultDigit[i] = top - digitsB[i];
+      transferOut[i] = borrow;
+    }
+    const hasAnyBorrow = transferOut.some(b => b === 1);
+    if (hasAnyBorrow) {
+      return { digitsA, digitsB, transferIn, transferOut, resultDigit, finalTransfer: 0, digitLength };
     }
   }
 }
