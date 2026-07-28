@@ -127,10 +127,42 @@ export function generateLongDivision(dividendLength) {
       quotientDigit,
       product,
       remainder,
-      bringDownDigit: i + 1 < dividendLength ? dividendDigits[i + 1] : null
+      bringDownDigit: i + 1 < dividendLength ? dividendDigits[i + 1] : null,
+      isDecimal: false
     });
     current = remainder;
   }
 
-  return { divisor, dividendDigits, dividendLength, steps, finalRemainder: current };
+  // Continue into up to 2 decimal places when the division isn't exact,
+  // "bringing down" an implied zero each time (standard long-division
+  // convention) rather than stopping at a whole-number remainder.
+  const hasDecimalPoint = current !== 0;
+  if (hasDecimalPoint) {
+    steps[dividendLength - 1].bringDownDigit = 0;
+  }
+
+  let decimalDigitCount = 0;
+  if (hasDecimalPoint) {
+    for (let d = 0; d < 2 && current !== 0; d++) {
+      current = current * 10;
+      const quotientDigit = Math.floor(current / divisor);
+      const product = quotientDigit * divisor;
+      const remainder = current - product;
+      decimalDigitCount++;
+      steps.push({
+        partialDividend: current,
+        quotientDigit,
+        product,
+        remainder,
+        bringDownDigit: null,
+        isDecimal: true
+      });
+      current = remainder;
+    }
+    for (let k = dividendLength; k < steps.length - 1; k++) {
+      steps[k].bringDownDigit = 0;
+    }
+  }
+
+  return { divisor, dividendDigits, dividendLength, steps, finalRemainder: current, hasDecimalPoint, decimalDigitCount };
 }

@@ -609,6 +609,7 @@ input.hidden-input {
 }
 
 .quotient-box {
+  position: relative;
   width: 40px;
   height: 40px;
   text-align: center;
@@ -623,6 +624,15 @@ input.hidden-input {
 .quotient-box.active { box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb),0.3); background: white; border: 2px solid var(--accent-2); }
 .quotient-box.correct { background: var(--green); color: white; animation: pop 0.3s; }
 .quotient-box.wrong { animation: shake 0.4s; }
+.quotient-box.decimal-start::before {
+  content: '.';
+  position: absolute;
+  left: -9px;
+  bottom: -2px;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--accent-dark);
+}
 
 .divisor-value {
   font-size: 1.3rem;
@@ -652,10 +662,9 @@ input.hidden-input {
 .step-minus { font-weight: 800; color: var(--text-soft); justify-self: end; padding-right: 4px; }
 
 .step-input {
-  width: 100%;
+  width: 40px;
   height: 38px;
-  text-align: right;
-  padding-right: 8px;
+  text-align: center;
   font-size: 1.1rem;
   font-weight: 800;
   border: 2px solid var(--accent);
@@ -663,12 +672,13 @@ input.hidden-input {
   color: var(--accent-dark);
   background: white;
   box-sizing: border-box;
+  justify-self: center;
 }
 .step-input.active { border-color: var(--accent-2); box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb),0.3); }
 .step-input.correct { background: var(--green); color: white; border-color: var(--green); animation: pop 0.3s; }
 .step-input.wrong { animation: shake 0.4s; }
 
-.step-line { border-bottom: 2px solid var(--text); align-self: end; margin-bottom: 2px; }
+.step-line { border-bottom: 2px solid var(--text); align-self: end; margin-bottom: 2px; justify-self: stretch; }
 
 .fly-arrow {
   position: fixed;

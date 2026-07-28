@@ -6,10 +6,10 @@ function setHint(text) {
   document.getElementById('advanced-hint-text').textContent = text;
 }
 
-function makeStepInput(cls) {
+function makeDigitInput(cls) {
   const input = document.createElement('input');
   input.className = `step-input ${cls}`;
-  input.maxLength = 2;
+  input.maxLength = 1;
   input.inputMode = 'numeric';
   input.disabled = true;
   return input;
@@ -40,18 +40,25 @@ function flyArrowDown(fromEl, toEl, digitText, onArrive) {
   }, 500);
 }
 
+function revealZeroDrop(toEl, onArrive) {
+  toEl.textContent = '0';
+  toEl.classList.add('landed-pop');
+  setTimeout(onArrive, 350);
+}
+
 export function startDivisionProblem(board, dividendLength, onComplete) {
   const problem = generateLongDivision(dividendLength);
-  const { divisor, dividendDigits, steps } = problem;
+  const { divisor, dividendDigits, steps, hasDecimalPoint, decimalDigitCount } = problem;
+  const totalColumns = dividendLength + decimalDigitCount;
 
   board.innerHTML = '';
   const grid = document.createElement('div');
   grid.className = 'division-board';
-  grid.style.gridTemplateColumns = `56px repeat(${dividendLength}, 44px)`;
+  grid.style.gridTemplateColumns = `56px repeat(${totalColumns}, 40px)`;
   board.appendChild(grid);
 
-  // Row 1: quotient boxes, one per dividend digit column
-  const quotientBoxes = dividendDigits.map((_, i) => {
+  // Row 1: one quotient box per column (whole + decimal places)
+  const quotientBoxes = steps.map((step, i) => {
     const box = document.createElement('input');
     box.className = 'quotient-box';
     box.maxLength = 1;
@@ -59,11 +66,12 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
     box.disabled = true;
     box.style.gridColumn = String(i + 2);
     box.style.gridRow = '1';
+    if (hasDecimalPoint && i === dividendLength) box.classList.add('decimal-start');
     grid.appendChild(box);
     return box;
   });
 
-  // Row 2: divisor + dividend digits (bracket)
+  // Row 2: divisor + dividend digits (bracket) - decimal columns stay empty here
   const divisorEl = document.createElement('div');
   divisorEl.className = 'divisor-value';
   divisorEl.textContent = divisor;
@@ -81,7 +89,7 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
     return cell;
   });
 
-  const stats = { correctSteps: 0, firstTryCorrect: 0, mistakes: 0, totalSteps: dividendLength * 3 };
+  const stats = { correctSteps: 0, firstTryCorrect: 0, mistakes: 0, totalSteps: steps.length * 3 };
   let gridRow = 3;
 
   function wireInput(input, expected, onSuccess) {
@@ -95,7 +103,7 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
     input.oninput = () => {
       const val = input.value.replace(/[^0-9]/g, '');
       input.value = val;
-      if (val === '' || val.length < String(expected).length) return;
+      if (val === '') return;
       const num = parseInt(val, 10);
       if (num === expected) {
         input.classList.remove('active', 'wrong');
@@ -118,8 +126,30 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
     };
   }
 
+  // Sequentially solves each digit of a (possibly multi-digit) value, one
+  // box per grid column, so every digit lines up with the column it
+  // belongs to instead of being crammed into one wide right-aligned box.
+  function wireMultiDigit(gridRowIndex, endCol, expectedValue, onAllDone) {
+    const digits = String(expectedValue).split('').map(Number);
+    const startCol = endCol - digits.length + 1;
+    const boxes = digits.map((d, k) => {
+      const box = makeDigitInput('product-input');
+      box.style.gridRow = String(gridRowIndex);
+      box.style.gridColumn = String(startCol + k);
+      grid.appendChild(box);
+      return box;
+    });
+    (function solveBox(k) {
+      if (k >= boxes.length) { onAllDone(); return; }
+      wireInput(boxes[k], digits[k], () => solveBox(k + 1));
+    })(0);
+    return startCol;
+  }
+
   function runStep(i) {
     const step = steps[i];
+    const col = i + 2;
+
     setHint(`How many times does ${divisor} go into ${step.partialDividend}?`);
 
     wireInput(quotientBoxes[i], step.quotientDigit, () => {
@@ -128,9 +158,6 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
       const remainderRow = gridRow + 2;
       gridRow += 3;
 
-      const isTwoDigitProduct = step.product >= 10;
-      const productSpan = isTwoDigitProduct ? `${i + 1} / span 2` : String(i + 2);
-
       const minus = document.createElement('span');
       minus.className = 'step-minus';
       minus.textContent = '−';
@@ -138,27 +165,12 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
       minus.style.gridRow = String(productRow);
       grid.appendChild(minus);
 
-      const productInput = makeStepInput('product-input');
-      productInput.style.gridRow = String(productRow);
-      productInput.style.gridColumn = productSpan;
-      grid.appendChild(productInput);
-
-      const line = document.createElement('div');
-      line.className = 'step-line';
-      line.style.gridRow = String(lineRow);
-      line.style.gridColumn = productSpan;
-      grid.appendChild(line);
-
-      const remainderInput = makeStepInput('remainder-input');
-      remainderInput.style.gridRow = String(remainderRow);
-      remainderInput.style.gridColumn = String(i + 2);
-      grid.appendChild(remainderInput);
-
       setHint(`Multiply: ${step.quotientDigit} × ${divisor}`);
-      wireInput(productInput, step.product, () => {
+      const productStartCol = wireMultiDigit(productRow, col, step.product, () => {
         setHint(`Subtract: ${step.partialDividend} − ${step.product}`);
-        wireInput(remainderInput, step.remainder, () => {
-          dividendCells[i].classList.add('used');
+        wireMultiDigit(remainderRow, col, step.remainder, () => {
+          if (!step.isDecimal) dividendCells[i].classList.add('used');
+
           if (step.bringDownDigit !== null) {
             const landingCell = document.createElement('div');
             landingCell.className = 'bring-down-digit';
@@ -166,14 +178,28 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
             landingCell.style.gridRow = String(remainderRow);
             grid.appendChild(landingCell);
 
-            flyArrowDown(dividendCells[i + 1], landingCell, String(step.bringDownDigit), () => {
-              setTimeout(() => runStep(i + 1), 300);
-            });
+            const bringingDownRealDigit = i + 1 < dividendLength;
+            if (bringingDownRealDigit) {
+              flyArrowDown(dividendCells[i + 1], landingCell, String(step.bringDownDigit), () => {
+                setTimeout(() => runStep(i + 1), 300);
+              });
+            } else {
+              revealZeroDrop(landingCell, () => {
+                setTimeout(() => runStep(i + 1), 300);
+              });
+            }
           } else {
             setTimeout(() => onComplete(stats), 500);
           }
         });
       });
+
+      const line = document.createElement('div');
+      line.className = 'step-line';
+      line.style.gridRow = String(lineRow);
+      const digitCount = String(step.product).length;
+      line.style.gridColumn = `${productStartCol} / span ${digitCount}`;
+      grid.appendChild(line);
     });
   }
 
