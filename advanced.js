@@ -19,11 +19,11 @@ function buildAdditionSteps(problem) {
 }
 
 function buildSubtractionSteps(problem) {
-  const { digitLength, transferIn, resultDigit, digitsA } = problem;
+  const { digitLength, transferOut, resultDigit } = problem;
   const steps = [];
   for (let i = 0; i < digitLength; i++) {
-    if (transferIn[i] === 1) {
-      steps.push({ type: 'reduce', col: i, expected: digitsA[i] - 1 });
+    if (transferOut[i] === 1) {
+      steps.push({ type: 'select-borrow', col: i, borrowFromCol: i + 1 });
     }
     steps.push({ type: 'result', col: i, expected: resultDigit[i] });
   }
@@ -42,16 +42,15 @@ function additionHint(problem, step) {
 }
 
 function subtractionHint(problem, step) {
-  const { digitsA, digitsB, transferIn, transferOut } = problem;
-  if (step.type === 'reduce') {
-    return `Borrowing! This column lends 1, so ${digitsA[step.col]} becomes ${digitsA[step.col] - 1}.`;
+  const { digitsA, digitsB, transferIn } = problem;
+  if (step.type === 'select-borrow') {
+    return `Not enough here! Click the digit you can borrow 10 from.`;
   }
   const col = step.col;
   const base = transferIn[col] === 1 ? digitsA[col] - 1 : digitsA[col];
-  if (transferOut[col] === 1) {
-    return `Not enough here — borrow 10 from the next column! Now find ${base + 10} − ${digitsB[col]}.`;
-  }
-  return `Subtract this column: ${base} − ${digitsB[col]}`;
+  const wasBoosted = problem.transferOut[col] === 1;
+  const top = wasBoosted ? base + 10 : base;
+  return `Subtract this column: ${top} − ${digitsB[col]}`;
 }
 
 const OPERATIONS = {
@@ -74,6 +73,7 @@ const OPERATIONS = {
 let config = { operation: 'add', digitLength: 3, numProblems: 5 };
 let run = null;
 let activeInput = null;
+let hintRevealed = false;
 
 function renderColumnBoard(problem, operatorSymbol, hasExtraColumn) {
   const { digitsA, digitsB, digitLength } = problem;
@@ -120,18 +120,16 @@ function renderColumnBoard(problem, operatorSymbol, hasExtraColumn) {
     carryBox.maxLength = 1;
     carryBox.inputMode = 'numeric';
     carryBox.disabled = true;
-    if (i === 0 || isExtra) carryBox.classList.add('placeholder');
+    const boxNeverUsed = isExtra || (operatorSymbol !== '−' && i === 0);
+    if (boxNeverUsed) carryBox.classList.add('placeholder');
     stack.appendChild(carryBox);
-    if (!isExtra && i > 0) carryInputs[i] = carryBox;
+    if (!isExtra) carryInputs[i] = carryBox;
 
     const digitA = document.createElement('div');
     digitA.className = 'digit-box' + (isExtra ? ' blank' : '');
     if (!isExtra) {
-      const valueSpan = document.createElement('span');
-      valueSpan.className = 'digit-value';
-      valueSpan.textContent = digitsA[i];
-      digitA.appendChild(valueSpan);
-      digitACells[i] = valueSpan;
+      digitA.textContent = digitsA[i];
+      digitACells[i] = digitA;
     }
     stack.appendChild(digitA);
 
@@ -162,44 +160,61 @@ function renderColumnBoard(problem, operatorSymbol, hasExtraColumn) {
   return { frame, resultInputs, carryInputs, digitACells };
 }
 
-function activateStep(state, step, onReady) {
-  const hintEl = document.getElementById('advanced-hint');
-  const isBoost = step.type === 'result' && state.operationKey === 'sub' &&
-    state.problem.transferOut[step.col] === 1;
+function updateHintText(state, step) {
+  document.getElementById('advanced-hint-text').textContent = state.opConfig.hint(state.problem, step);
+}
 
-  if (isBoost) {
-    const { transferIn, digitsA, digitsB } = state.problem;
-    const col = step.col;
-    const base = transferIn[col] === 1 ? digitsA[col] - 1 : digitsA[col];
-    hintEl.textContent = `${base} is smaller than ${digitsB[col]} — we need to borrow!`;
-    setTimeout(() => {
-      const effective = base + 10;
-      const cell = state.digitACells[col];
-      if (cell) {
-        cell.textContent = effective;
-        cell.classList.remove('struck');
-        cell.classList.add('boosted');
+function revealBox(box, value) {
+  box.value = value;
+  box.classList.remove('active', 'wrong');
+  box.classList.add('correct');
+  box.disabled = true;
+}
+
+function resolveBorrow(state, step) {
+  const { problem, carryInputs, digitACells } = state;
+  const lendCol = step.borrowFromCol;
+  const recvCol = step.col;
+
+  digitACells[lendCol].classList.add('crossed');
+  revealBox(carryInputs[lendCol], problem.digitsA[lendCol] - 1);
+
+  digitACells[recvCol].classList.add('crossed');
+  const base = problem.transferIn[recvCol] === 1 ? problem.digitsA[recvCol] - 1 : problem.digitsA[recvCol];
+  revealBox(carryInputs[recvCol], base + 10);
+
+  state.stepIndex++;
+  setTimeout(() => wireStep(state), 500);
+}
+
+function wireSelectBorrow(state, step) {
+  activeInput = null;
+  let missed = false;
+  const cells = state.digitACells;
+
+  Object.keys(cells).forEach(key => {
+    const col = parseInt(key, 10);
+    const cell = cells[col];
+    cell.classList.add('selectable');
+    cell.onclick = () => {
+      if (col === step.borrowFromCol) {
+        Object.keys(cells).forEach(k => {
+          cells[k].classList.remove('selectable');
+          cells[k].onclick = null;
+        });
+        playDing();
+        state.correctSteps++;
+        if (!missed) state.firstTryCorrect++;
+        resolveBorrow(state, step);
+      } else {
+        playBuzz();
+        state.mistakes++;
+        missed = true;
+        cell.classList.add('shake-wrong');
+        setTimeout(() => cell.classList.remove('shake-wrong'), 400);
       }
-      hintEl.textContent = `Borrowed 10! Now find ${effective} − ${digitsB[col]}.`;
-      onReady();
-    }, 1100);
-    return;
-  }
-
-  hintEl.textContent = state.opConfig.hint(state.problem, step);
-  if (step.type === 'reduce') {
-    const cell = state.digitACells[step.col];
-    if (cell) cell.classList.add('struck');
-  } else if (step.type === 'result' && state.operationKey === 'sub' && state.problem.transferIn[step.col] === 1) {
-    const { digitsA } = state.problem;
-    const cell = state.digitACells[step.col];
-    if (cell) {
-      cell.textContent = digitsA[step.col] - 1;
-      cell.classList.remove('struck');
-      cell.classList.add('boosted');
-    }
-  }
-  onReady();
+    };
+  });
 }
 
 function wireStep(state) {
@@ -210,50 +225,61 @@ function wireStep(state) {
     return;
   }
   const step = steps[idx];
+  updateHintText(state, step);
+
+  if (step.type === 'select-borrow') {
+    wireSelectBorrow(state, step);
+    return;
+  }
+
   const input = step.type === 'result' ? state.resultInputs[step.col] : state.carryInputs[step.col];
 
   if (step.type === 'result' && step.col === state.problem.digitLength) {
     input.style.visibility = 'visible';
   }
 
-  activateStep(state, step, () => {
-    input.disabled = false;
-    input.classList.add('active');
-    input.value = '';
-    input.focus();
-    activeInput = input;
-    let missedThisStep = false;
+  input.disabled = false;
+  input.classList.add('active');
+  input.value = '';
+  input.focus();
+  activeInput = input;
+  let missedThisStep = false;
 
-    input.oninput = () => {
-      const val = input.value.replace(/[^0-9]/g, '');
-      input.value = val;
-      if (val === '') return;
-      const digit = parseInt(val, 10);
-      if (digit === step.expected) {
-        input.classList.remove('active', 'wrong');
-        input.classList.add('correct');
-        input.disabled = true;
-        playDing();
-        state.correctSteps++;
-        if (!missedThisStep) state.firstTryCorrect++;
-        state.stepIndex++;
-        setTimeout(() => wireStep(state), 200);
-      } else {
-        input.classList.add('wrong');
-        playBuzz();
-        state.mistakes++;
-        missedThisStep = true;
-        setTimeout(() => {
-          input.classList.remove('wrong');
-          input.value = '';
-        }, 400);
-      }
-    };
-  });
+  input.oninput = () => {
+    const val = input.value.replace(/[^0-9]/g, '');
+    input.value = val;
+    if (val === '') return;
+    const digit = parseInt(val, 10);
+    if (digit === step.expected) {
+      input.classList.remove('active', 'wrong');
+      input.classList.add('correct');
+      input.disabled = true;
+      playDing();
+      state.correctSteps++;
+      if (!missedThisStep) state.firstTryCorrect++;
+      state.stepIndex++;
+      setTimeout(() => wireStep(state), 200);
+    } else {
+      input.classList.add('wrong');
+      playBuzz();
+      state.mistakes++;
+      missedThisStep = true;
+      setTimeout(() => {
+        input.classList.remove('wrong');
+        input.value = '';
+      }, 400);
+    }
+  };
 }
 
 function finishProblem(state) {
   state.onComplete();
+}
+
+function resetHint() {
+  hintRevealed = false;
+  document.getElementById('advanced-hint-text').style.display = 'none';
+  document.getElementById('advanced-hint-btn').style.display = 'inline-flex';
 }
 
 function startProblem(problemIndex) {
@@ -261,6 +287,7 @@ function startProblem(problemIndex) {
   board.innerHTML = '';
   document.getElementById('advanced-progress').textContent =
     `Problem ${problemIndex + 1} / ${config.numProblems}`;
+  resetHint();
 
   const opConfig = OPERATIONS[config.operation];
   const problem = opConfig.generate(config.digitLength);
@@ -350,6 +377,12 @@ export function initAdvancedSetup() {
     run = { problemsCompleted: 0, totalSteps: 0, totalFirstTryCorrect: 0, totalMistakes: 0 };
     showScreen('screen-advanced-play');
     startProblem(0);
+  });
+
+  document.getElementById('advanced-hint-btn').addEventListener('click', () => {
+    hintRevealed = true;
+    document.getElementById('advanced-hint-text').style.display = 'block';
+    document.getElementById('advanced-hint-btn').style.display = 'none';
   });
 
   document.querySelectorAll('#advanced-numpad [data-digit]').forEach(btn => {

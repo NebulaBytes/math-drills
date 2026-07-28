@@ -405,24 +405,48 @@ h2 { text-align: center; font-size: 1.6rem; margin-bottom: 20px; }
   font-size: 1.4rem;
   font-weight: 800;
   border-radius: var(--radius-sm);
+  position: relative;
 }
-.digit-box { background: var(--accent-tint); color: var(--accent-dark); }
+.digit-box { background: var(--accent-tint); color: var(--accent-dark); transition: transform 0.1s, box-shadow 0.15s; }
 .digit-box.blank { visibility: hidden; }
 
-.digit-value { transition: color 0.2s; }
-.digit-value.struck {
-  text-decoration: line-through;
-  text-decoration-thickness: 2px;
-  text-decoration-color: var(--red);
-  opacity: 0.55;
+.digit-box.selectable {
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.4);
 }
-.digit-value.boosted {
-  background: var(--accent);
-  color: white;
-  padding: 2px 8px;
-  border-radius: 8px;
-  animation: pop 0.3s;
+.digit-box.selectable:hover { transform: scale(1.08); }
+
+.digit-box.crossed::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 2px),
+    #111 calc(50% - 2px),
+    #111 calc(50% + 2px),
+    transparent calc(50% + 2px)
+  );
+  border-radius: var(--radius-sm);
+  pointer-events: none;
 }
+
+.digit-box.shake-wrong { animation: shake 0.4s; }
+
+.hint-btn {
+  border: none;
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.hint-btn:hover { background: var(--accent-tint-hover); }
 
 .advanced-hint {
   background: var(--accent-tint);
