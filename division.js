@@ -51,26 +51,26 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
   const { divisor, dividendDigits, steps, hasDecimalPoint, decimalDigitCount } = problem;
   const totalColumns = dividendLength + decimalDigitCount;
 
-  // Whole-part digit columns are 2..dividendLength+1. When there's a decimal
-  // part, the point gets its own dedicated (slim) column right after, and
-  // every decimal-step column shifts one further right to make room for it.
+  // Every column (whole and decimal alike) is the same width and directly
+  // adjacent to the next - the working rows never skip a column. The
+  // decimal point is answer-row-only: a marker overlaid via margin next to
+  // the first decimal quotient box, not a column of its own, so it can
+  // never introduce a gap in the subtraction rows below.
   function colFor(stepIndex) {
-    return stepIndex < dividendLength ? stepIndex + 2 : stepIndex + 3;
+    return stepIndex + 2;
   }
 
   board.innerHTML = '';
   const grid = document.createElement('div');
   grid.className = 'division-board';
-  grid.style.gridTemplateColumns = hasDecimalPoint
-    ? `56px repeat(${dividendLength}, 40px) 14px repeat(${decimalDigitCount}, 40px)`
-    : `56px repeat(${totalColumns}, 40px)`;
+  grid.style.gridTemplateColumns = `56px repeat(${totalColumns}, 40px)`;
   board.appendChild(grid);
 
   if (hasDecimalPoint) {
     const pointEl = document.createElement('div');
     pointEl.className = 'decimal-point';
     pointEl.textContent = '.';
-    pointEl.style.gridColumn = String(dividendLength + 2);
+    pointEl.style.gridColumn = String(colFor(dividendLength));
     pointEl.style.gridRow = '1';
     grid.appendChild(pointEl);
   }
@@ -194,19 +194,6 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
             landingCell.style.gridColumn = String(colFor(i + 1));
             landingCell.style.gridRow = String(remainderRow);
             grid.appendChild(landingCell);
-
-            // The whole->decimal transition row jumps over the slim point
-            // column (nothing else in that row needs it), which otherwise
-            // reads as a broken gap between the remainder and the brought-
-            // down zero. Mark it with its own point so the gap is legible.
-            if (i === dividendLength - 1 && hasDecimalPoint) {
-              const rowPoint = document.createElement('div');
-              rowPoint.className = 'decimal-point';
-              rowPoint.textContent = '.';
-              rowPoint.style.gridColumn = String(dividendLength + 2);
-              rowPoint.style.gridRow = String(remainderRow);
-              grid.appendChild(rowPoint);
-            }
 
             const bringingDownRealDigit = i + 1 < dividendLength;
             if (bringingDownRealDigit) {

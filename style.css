@@ -626,13 +626,15 @@ input.hidden-input {
 .quotient-box.wrong { animation: shake 0.4s; }
 
 .decimal-point {
-  justify-self: center;
+  justify-self: start;
   align-self: end;
+  margin-left: -9px;
   font-size: 1.8rem;
   font-weight: 900;
   color: var(--accent-dark);
   line-height: 1;
   padding-bottom: 8px;
+  pointer-events: none;
 }
 
 .divisor-value {
