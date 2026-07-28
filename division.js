@@ -106,7 +106,12 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
     return cell;
   });
 
-  const stats = { correctSteps: 0, firstTryCorrect: 0, mistakes: 0, totalSteps: steps.length * 3 };
+  // Quotient digit and remainder are always exactly 1 box, but the product
+  // can be 2 digits (e.g. 6x9=54) - count actual boxes, not an assumed
+  // fixed 3 per step, or a run with any 2-digit product overcounts
+  // firstTryCorrect relative to this total and accuracy exceeds 100%.
+  const totalBoxes = steps.reduce((sum, s) => sum + 1 + String(s.product).length + 1, 0);
+  const stats = { correctSteps: 0, firstTryCorrect: 0, mistakes: 0, totalSteps: totalBoxes };
   let gridRow = 3;
 
   function wireInput(input, expected, onSuccess) {
