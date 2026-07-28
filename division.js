@@ -51,11 +51,29 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
   const { divisor, dividendDigits, steps, hasDecimalPoint, decimalDigitCount } = problem;
   const totalColumns = dividendLength + decimalDigitCount;
 
+  // Whole-part digit columns are 2..dividendLength+1. When there's a decimal
+  // part, the point gets its own dedicated (slim) column right after, and
+  // every decimal-step column shifts one further right to make room for it.
+  function colFor(stepIndex) {
+    return stepIndex < dividendLength ? stepIndex + 2 : stepIndex + 3;
+  }
+
   board.innerHTML = '';
   const grid = document.createElement('div');
   grid.className = 'division-board';
-  grid.style.gridTemplateColumns = `56px repeat(${totalColumns}, 40px)`;
+  grid.style.gridTemplateColumns = hasDecimalPoint
+    ? `56px repeat(${dividendLength}, 40px) 14px repeat(${decimalDigitCount}, 40px)`
+    : `56px repeat(${totalColumns}, 40px)`;
   board.appendChild(grid);
+
+  if (hasDecimalPoint) {
+    const pointEl = document.createElement('div');
+    pointEl.className = 'decimal-point';
+    pointEl.textContent = '.';
+    pointEl.style.gridColumn = String(dividendLength + 2);
+    pointEl.style.gridRow = '1';
+    grid.appendChild(pointEl);
+  }
 
   // Row 1: one quotient box per column (whole + decimal places)
   const quotientBoxes = steps.map((step, i) => {
@@ -64,9 +82,8 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
     box.maxLength = 1;
     box.inputMode = 'numeric';
     box.disabled = true;
-    box.style.gridColumn = String(i + 2);
+    box.style.gridColumn = String(colFor(i));
     box.style.gridRow = '1';
-    if (hasDecimalPoint && i === dividendLength) box.classList.add('decimal-start');
     grid.appendChild(box);
     return box;
   });
@@ -83,7 +100,7 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
     const cell = document.createElement('div');
     cell.className = 'dividend-digit' + (i === 0 ? ' dividend-first' : '');
     cell.textContent = d;
-    cell.style.gridColumn = String(i + 2);
+    cell.style.gridColumn = String(colFor(i));
     cell.style.gridRow = '2';
     grid.appendChild(cell);
     return cell;
@@ -148,7 +165,7 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
 
   function runStep(i) {
     const step = steps[i];
-    const col = i + 2;
+    const col = colFor(i);
 
     setHint(`How many times does ${divisor} go into ${step.partialDividend}?`);
 
@@ -174,7 +191,7 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
           if (step.bringDownDigit !== null) {
             const landingCell = document.createElement('div');
             landingCell.className = 'bring-down-digit';
-            landingCell.style.gridColumn = String(i + 3);
+            landingCell.style.gridColumn = String(colFor(i + 1));
             landingCell.style.gridRow = String(remainderRow);
             grid.appendChild(landingCell);
 

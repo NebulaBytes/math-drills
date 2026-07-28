@@ -624,14 +624,15 @@ input.hidden-input {
 .quotient-box.active { box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb),0.3); background: white; border: 2px solid var(--accent-2); }
 .quotient-box.correct { background: var(--green); color: white; animation: pop 0.3s; }
 .quotient-box.wrong { animation: shake 0.4s; }
-.quotient-box.decimal-start::before {
-  content: '.';
-  position: absolute;
-  left: -9px;
-  bottom: -2px;
-  font-size: 1.6rem;
+
+.decimal-point {
+  justify-self: center;
+  align-self: end;
+  font-size: 1.8rem;
   font-weight: 900;
   color: var(--accent-dark);
+  line-height: 1;
+  padding-bottom: 8px;
 }
 
 .divisor-value {
