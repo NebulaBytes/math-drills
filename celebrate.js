@@ -1,9 +1,10 @@
 const COLORS = ['#f472b6', '#fbbf24', '#22c55e', '#38bdf8', '#a78bfa', '#fb7185'];
 
 const TIERS = [
+  { min: 100, messages: ['💯 Perfect score!', '👑 Flawless!', '🥇 100%! Incredible!', '🎆 Absolutely perfect!'] },
   { min: 85, messages: ['🏆 Nailed it!', '🌟 Amazing work!', '🎉 You crushed it!', '✨ Perfect practice!'] },
-  { min: 50, messages: ['🎉 Great work!', '👍 Nice job!', '🌟 Well done!', '💪 Solid effort!'] },
-  { min: 0, messages: ['💪 Good effort!', '🌱 Keep practicing!', '👏 Nice try!', '🚀 You\'re improving!'] }
+  { min: 30, messages: ['🎉 Great work!', '👍 Nice job!', '🌟 Well done!', '💪 Solid effort!'] },
+  { min: 0, messages: ['🌱 Keep practicing!', '👏 Nice try!', '🚀 You\'re improving!', '💪 Keep going!'] }
 ];
 
 export function pickCelebrationMessage(accuracy = 100) {
