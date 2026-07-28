@@ -459,6 +459,26 @@ h2 { text-align: center; font-size: 1.6rem; margin-bottom: 20px; }
   text-align: center;
   min-height: 1.4em;
 }
+
+.fly-digit {
+  position: fixed;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: white;
+  font-weight: 800;
+  font-size: 0.85rem;
+  border-radius: 50%;
+  z-index: 2000;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  transition: transform 0.55s cubic-bezier(.4,0,.2,1), width 0.2s, font-size 0.2s;
+}
+.fly-digit.grown { width: 38px; height: 38px; font-size: 1rem; }
+.fly-digit.landed { transform: scale(0) !important; transition: transform 0.2s ease-in; }
 .carry-box {
   width: 30px;
   height: 30px;

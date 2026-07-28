@@ -73,7 +73,7 @@ const OPERATIONS = {
 let config = { operation: 'add', digitLength: 3, numProblems: 5 };
 let run = null;
 let activeInput = null;
-let hintRevealed = false;
+let hintShown = false;
 
 function renderColumnBoard(problem, operatorSymbol, hasExtraColumn) {
   const { digitsA, digitsB, digitLength } = problem;
@@ -171,6 +171,36 @@ function revealBox(box, value) {
   box.disabled = true;
 }
 
+function flyTen(fromEl, toEl, onArrive) {
+  const fromRect = fromEl.getBoundingClientRect();
+  const toRect = toEl.getBoundingClientRect();
+
+  const flyer = document.createElement('div');
+  flyer.className = 'fly-digit';
+  flyer.textContent = '1';
+  flyer.style.left = `${fromRect.left + fromRect.width / 2 - 16}px`;
+  flyer.style.top = `${fromRect.top + fromRect.height / 2 - 16}px`;
+  document.body.appendChild(flyer);
+
+  requestAnimationFrame(() => {
+    flyer.classList.add('grown');
+    flyer.textContent = '10';
+    requestAnimationFrame(() => {
+      const dx = toRect.left + toRect.width / 2 - (fromRect.left + fromRect.width / 2);
+      const dy = toRect.top + toRect.height / 2 - (fromRect.top + fromRect.height / 2);
+      flyer.style.transform = `translate(${dx}px, ${dy}px) scale(0.9)`;
+    });
+  });
+
+  setTimeout(() => {
+    flyer.classList.add('landed');
+    setTimeout(() => {
+      flyer.remove();
+      onArrive();
+    }, 220);
+  }, 650);
+}
+
 function resolveBorrow(state, step) {
   const { problem, carryInputs, digitACells } = state;
   const lendCol = step.borrowFromCol;
@@ -179,12 +209,14 @@ function resolveBorrow(state, step) {
   digitACells[lendCol].classList.add('crossed');
   revealBox(carryInputs[lendCol], problem.digitsA[lendCol] - 1);
 
-  digitACells[recvCol].classList.add('crossed');
-  const base = problem.transferIn[recvCol] === 1 ? problem.digitsA[recvCol] - 1 : problem.digitsA[recvCol];
-  revealBox(carryInputs[recvCol], base + 10);
+  flyTen(digitACells[lendCol], digitACells[recvCol], () => {
+    digitACells[recvCol].classList.add('crossed');
+    const base = problem.transferIn[recvCol] === 1 ? problem.digitsA[recvCol] - 1 : problem.digitsA[recvCol];
+    revealBox(carryInputs[recvCol], base + 10);
 
-  state.stepIndex++;
-  setTimeout(() => wireStep(state), 500);
+    state.stepIndex++;
+    setTimeout(() => wireStep(state), 400);
+  });
 }
 
 function wireSelectBorrow(state, step) {
@@ -277,9 +309,9 @@ function finishProblem(state) {
 }
 
 function resetHint() {
-  hintRevealed = false;
+  hintShown = false;
   document.getElementById('advanced-hint-text').style.display = 'none';
-  document.getElementById('advanced-hint-btn').style.display = 'inline-flex';
+  document.getElementById('advanced-hint-btn').textContent = '💡 Hint';
 }
 
 function startProblem(problemIndex) {
@@ -380,9 +412,9 @@ export function initAdvancedSetup() {
   });
 
   document.getElementById('advanced-hint-btn').addEventListener('click', () => {
-    hintRevealed = true;
-    document.getElementById('advanced-hint-text').style.display = 'block';
-    document.getElementById('advanced-hint-btn').style.display = 'none';
+    hintShown = !hintShown;
+    document.getElementById('advanced-hint-text').style.display = hintShown ? 'block' : 'none';
+    document.getElementById('advanced-hint-btn').textContent = hintShown ? '✕ Hide hint' : '💡 Hint';
   });
 
   document.querySelectorAll('#advanced-numpad [data-digit]').forEach(btn => {
