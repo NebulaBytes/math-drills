@@ -55,6 +55,7 @@ function subtractionHint(problem, step) {
 
 const OPERATIONS = {
   add: {
+    label: 'Carry-over Addition',
     generate: generateCarryAddition,
     operator: '+',
     hasExtraColumn: true,
@@ -62,6 +63,7 @@ const OPERATIONS = {
     hint: additionHint
   },
   sub: {
+    label: 'Borrow Subtraction',
     generate: generateBorrowSubtraction,
     operator: '−',
     hasExtraColumn: false,
@@ -74,6 +76,56 @@ let config = { operation: 'add', digitLength: 3, numProblems: 5 };
 let run = null;
 let activeInput = null;
 let hintShown = false;
+let timerInterval = null;
+let runStartTime = null;
+let problemStartTime = null;
+
+function formatTime(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function updateTimerDisplay() {
+  const now = Date.now();
+  const totalStr = formatTime(now - runStartTime);
+  const problemStr = formatTime(now - problemStartTime);
+  document.getElementById('advanced-timer').textContent = `⏱ ${totalStr} · this problem ${problemStr}`;
+}
+
+function startRunTimer() {
+  runStartTime = Date.now();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimerDisplay, 500);
+}
+
+function stopRunTimer() {
+  clearInterval(timerInterval);
+}
+
+function renderProgressDots() {
+  const container = document.getElementById('advanced-progress-dots');
+  container.innerHTML = '';
+  for (let i = 0; i < config.numProblems; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot';
+    container.appendChild(dot);
+  }
+}
+
+function markCurrentDot(problemIndex) {
+  const dots = document.querySelectorAll('.progress-dot');
+  if (dots[problemIndex]) dots[problemIndex].classList.add('current');
+}
+
+function markDotResult(problemIndex, hadMistakes) {
+  const dots = document.querySelectorAll('.progress-dot');
+  if (dots[problemIndex]) {
+    dots[problemIndex].classList.remove('current');
+    dots[problemIndex].classList.add(hadMistakes ? 'dot-red' : 'dot-green');
+  }
+}
 
 function renderColumnBoard(problem, operatorSymbol, hasExtraColumn) {
   const { digitsA, digitsB, digitLength } = problem;
@@ -320,6 +372,8 @@ function startProblem(problemIndex) {
   document.getElementById('advanced-progress').textContent =
     `Problem ${problemIndex + 1} / ${config.numProblems}`;
   resetHint();
+  problemStartTime = Date.now();
+  markCurrentDot(problemIndex);
 
   const opConfig = OPERATIONS[config.operation];
   const problem = opConfig.generate(config.digitLength);
@@ -343,6 +397,7 @@ function startProblem(problemIndex) {
       run.totalSteps += state.steps.length;
       run.totalMistakes += state.mistakes;
       run.problemsCompleted++;
+      markDotResult(problemIndex, state.mistakes > 0);
       playCelebration();
       setTimeout(() => {
         if (problemIndex + 1 < config.numProblems) {
@@ -357,14 +412,18 @@ function startProblem(problemIndex) {
 }
 
 function showAdvancedResults() {
+  stopRunTimer();
   const accuracy = run.totalSteps
     ? Math.round((run.totalFirstTryCorrect / run.totalSteps) * 100)
     : 100;
+  const totalTime = formatTime(Date.now() - runStartTime);
+  document.getElementById('advanced-results-activity').textContent = OPERATIONS[config.operation].label;
   document.getElementById('advanced-results-body').innerHTML = `
     <div class="big-stat">${run.problemsCompleted} problems solved</div>
     <div class="stat-row">
       <div class="stat"><div class="val">${accuracy}%</div><div class="lbl">First-try accuracy</div></div>
       <div class="stat"><div class="val">${run.totalMistakes}</div><div class="lbl">Mistakes</div></div>
+      <div class="stat"><div class="val">${totalTime}</div><div class="lbl">Time</div></div>
     </div>
   `;
   showScreen('screen-advanced-results');
@@ -399,17 +458,17 @@ export function initAdvancedSetup() {
     });
   });
 
-  document.getElementById('btn-advanced-start').addEventListener('click', () => {
+  function beginRun() {
     run = { problemsCompleted: 0, totalSteps: 0, totalFirstTryCorrect: 0, totalMistakes: 0 };
+    document.getElementById('advanced-activity-name').textContent = OPERATIONS[config.operation].label;
+    renderProgressDots();
+    startRunTimer();
     showScreen('screen-advanced-play');
     startProblem(0);
-  });
+  }
 
-  document.getElementById('btn-advanced-again').addEventListener('click', () => {
-    run = { problemsCompleted: 0, totalSteps: 0, totalFirstTryCorrect: 0, totalMistakes: 0 };
-    showScreen('screen-advanced-play');
-    startProblem(0);
-  });
+  document.getElementById('btn-advanced-start').addEventListener('click', beginRun);
+  document.getElementById('btn-advanced-again').addEventListener('click', beginRun);
 
   document.getElementById('advanced-hint-btn').addEventListener('click', () => {
     hintShown = !hintShown;

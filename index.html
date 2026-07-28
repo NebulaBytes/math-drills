@@ -222,9 +222,14 @@
     <!-- ADVANCED PLAY -->
     <section id="screen-advanced-play" class="screen">
       <div class="hud">
-        <span id="advanced-progress">Problem 1 / 5</span>
+        <div>
+          <div class="advanced-activity" id="advanced-activity-name"></div>
+          <span id="advanced-progress">Problem 1 / 5</span>
+        </div>
         <button id="advanced-hint-btn" class="hint-btn">💡 Hint</button>
       </div>
+      <div class="progress-dots" id="advanced-progress-dots"></div>
+      <div class="advanced-timer" id="advanced-timer">⏱ 0:00 · this problem 0:00</div>
       <div class="advanced-hint" id="advanced-hint-text" style="display:none;"></div>
       <div class="card" style="text-align:center;" id="advanced-board"></div>
       <div class="numpad" id="advanced-numpad">
@@ -246,6 +251,7 @@
     <!-- ADVANCED RESULTS -->
     <section id="screen-advanced-results" class="screen">
       <h2>Great job! 🌟</h2>
+      <div class="results-activity" id="advanced-results-activity"></div>
       <div class="card results-summary" id="advanced-results-body"></div>
       <div class="btn-row">
         <button class="btn secondary" data-home>Home</button>

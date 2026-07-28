@@ -307,6 +307,54 @@ h2 { text-align: center; font-size: 1.6rem; margin-bottom: 20px; }
 .hud .streak { color: var(--accent-3); }
 .hud .timer { color: var(--accent); }
 
+.advanced-activity {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--accent-dark);
+}
+#advanced-progress { font-size: 0.85rem; font-weight: 700; color: var(--text-soft); }
+
+.progress-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.progress-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-soft);
+  opacity: 0.3;
+  transition: background 0.2s, transform 0.2s, opacity 0.2s;
+}
+.progress-dot.current {
+  opacity: 1;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.3);
+  transform: scale(1.2);
+}
+.progress-dot.dot-green { opacity: 1; background: var(--green); }
+.progress-dot.dot-red { opacity: 1; background: var(--red); }
+
+.advanced-timer {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-soft);
+  margin-bottom: 16px;
+}
+
+.results-activity {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-soft);
+  margin-top: -12px;
+  margin-bottom: 16px;
+}
+
 .question-card {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: white;
