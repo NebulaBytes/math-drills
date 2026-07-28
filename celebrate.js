@@ -1,7 +1,17 @@
 const COLORS = ['#f472b6', '#fbbf24', '#22c55e', '#38bdf8', '#a78bfa', '#fb7185'];
-const MESSAGES = ['🎉 Awesome job! 🎉', '🌟 You did it! 🌟', '🏆 Nailed it! 🏆', '🎊 Great work! 🎊'];
 
-export function celebrate() {
+const TIERS = [
+  { min: 85, messages: ['🏆 Nailed it!', '🌟 Amazing work!', '🎉 You crushed it!', '✨ Perfect practice!'] },
+  { min: 50, messages: ['🎉 Great work!', '👍 Nice job!', '🌟 Well done!', '💪 Solid effort!'] },
+  { min: 0, messages: ['💪 Good effort!', '🌱 Keep practicing!', '👏 Nice try!', '🚀 You\'re improving!'] }
+];
+
+export function pickCelebrationMessage(accuracy = 100) {
+  const tier = TIERS.find(t => accuracy >= t.min) || TIERS[TIERS.length - 1];
+  return tier.messages[Math.floor(Math.random() * tier.messages.length)];
+}
+
+export function celebrate(message) {
   const overlay = document.createElement('div');
   overlay.className = 'celebration-overlay';
 
@@ -17,7 +27,6 @@ export function celebrate() {
     pieces += `<span class="confetti-piece" style="left:${left}%; background:${color}; width:${width}px; height:${height}px; animation-delay:${delay}s; animation-duration:${duration}s; transform:rotate(${rotate}deg);"></span>`;
   }
 
-  const message = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
   overlay.innerHTML = `
     <div class="confetti-field">${pieces}</div>
     <div class="celebration-banner">${message}</div>

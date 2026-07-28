@@ -2,7 +2,7 @@ import { generateFact } from './problems.js';
 import { playDing, playBuzz, setMuted, isMuted } from './sounds.js';
 import { showScreen } from './nav.js';
 import { initAdvancedSetup } from './advanced.js';
-import { celebrate } from './celebrate.js';
+import { celebrate, pickCelebrationMessage } from './celebrate.js';
 
 const speedConfig = {
   operation: 'mul',
@@ -262,8 +262,10 @@ function endSpeedRun() {
       <div class="stat"><div class="val">🔥 ${speedRun.bestStreak}</div><div class="lbl">Best streak</div></div>
     </div>
   `;
+  const message = pickCelebrationMessage(accuracy);
+  document.getElementById('speed-results-heading').textContent = message;
   showScreen('screen-speed-results');
-  celebrate();
+  celebrate(message);
 }
 
 function initNumpad() {

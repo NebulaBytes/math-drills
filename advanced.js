@@ -1,7 +1,7 @@
 import { generateCarryAddition, generateBorrowSubtraction } from './problems.js';
 import { playDing, playBuzz, playCelebration } from './sounds.js';
 import { showScreen } from './nav.js';
-import { celebrate } from './celebrate.js';
+import { celebrate, pickCelebrationMessage } from './celebrate.js';
 
 function buildAdditionSteps(problem) {
   const { digitLength, transferOut, resultDigit } = problem;
@@ -426,8 +426,10 @@ function showAdvancedResults() {
       <div class="stat"><div class="val">${totalTime}</div><div class="lbl">Time</div></div>
     </div>
   `;
+  const message = pickCelebrationMessage(accuracy);
+  document.getElementById('advanced-results-heading').textContent = message;
   showScreen('screen-advanced-results');
-  celebrate();
+  celebrate(message);
 }
 
 export function initAdvancedSetup() {
