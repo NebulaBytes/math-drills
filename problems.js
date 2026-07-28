@@ -107,3 +107,30 @@ export function generateBorrowSubtraction(digitLength) {
     return { digitsA, digitsB, transferIn, transferOut, resultDigit, finalTransfer: 0, digitLength };
   }
 }
+
+export function generateLongDivision(dividendLength) {
+  const divisor = randInt(2, 9);
+  const dividendDigits = [];
+  for (let i = 0; i < dividendLength; i++) {
+    dividendDigits.push(i === 0 ? randInt(divisor, 9) : randInt(0, 9));
+  }
+
+  let current = 0;
+  const steps = [];
+  for (let i = 0; i < dividendLength; i++) {
+    current = current * 10 + dividendDigits[i];
+    const quotientDigit = Math.floor(current / divisor);
+    const product = quotientDigit * divisor;
+    const remainder = current - product;
+    steps.push({
+      partialDividend: current,
+      quotientDigit,
+      product,
+      remainder,
+      bringDownDigit: i + 1 < dividendLength ? dividendDigits[i + 1] : null
+    });
+    current = remainder;
+  }
+
+  return { divisor, dividendDigits, dividendLength, steps, finalRemainder: current };
+}

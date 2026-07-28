@@ -2,6 +2,8 @@ import { generateCarryAddition, generateBorrowSubtraction } from './problems.js'
 import { playDing, playBuzz, playCelebration } from './sounds.js';
 import { showScreen } from './nav.js';
 import { celebrate, pickCelebrationMessage } from './celebrate.js';
+import { setActiveInput, getActiveInput } from './input-router.js';
+import { startDivisionProblem } from './division.js';
 
 function buildAdditionSteps(problem) {
   const { digitLength, transferOut, resultDigit } = problem;
@@ -69,12 +71,14 @@ const OPERATIONS = {
     hasExtraColumn: false,
     buildSteps: buildSubtractionSteps,
     hint: subtractionHint
+  },
+  div: {
+    label: 'Long Division'
   }
 };
 
 let config = { operation: 'add', digitLength: 3, numProblems: 5 };
 let run = null;
-let activeInput = null;
 let hintShown = false;
 let timerInterval = null;
 let runStartTime = null;
@@ -272,7 +276,7 @@ function resolveBorrow(state, step) {
 }
 
 function wireSelectBorrow(state, step) {
-  activeInput = null;
+  setActiveInput(null);
   let missed = false;
   const cells = state.digitACells;
 
@@ -326,13 +330,13 @@ function wireStep(state) {
   input.classList.add('active');
   input.value = '';
   input.focus();
-  activeInput = input;
+  setActiveInput(input);
   let missedThisStep = false;
 
   input.oninput = () => {
     const val = input.value.replace(/[^0-9]/g, '');
     input.value = val;
-    if (val === '') return;
+    if (val === '' || val.length < String(step.expected).length) return;
     const digit = parseInt(val, 10);
     if (digit === step.expected) {
       input.classList.remove('active', 'wrong');
@@ -366,6 +370,22 @@ function resetHint() {
   document.getElementById('advanced-hint-btn').textContent = '💡 Hint';
 }
 
+function completeProblem(problemIndex, stats) {
+  run.totalFirstTryCorrect += stats.firstTryCorrect;
+  run.totalSteps += stats.totalSteps;
+  run.totalMistakes += stats.mistakes;
+  run.problemsCompleted++;
+  markDotResult(problemIndex, stats.mistakes > 0);
+  playCelebration();
+  setTimeout(() => {
+    if (problemIndex + 1 < config.numProblems) {
+      startProblem(problemIndex + 1);
+    } else {
+      showAdvancedResults();
+    }
+  }, 500);
+}
+
 function startProblem(problemIndex) {
   const board = document.getElementById('advanced-board');
   board.innerHTML = '';
@@ -374,6 +394,11 @@ function startProblem(problemIndex) {
   resetHint();
   problemStartTime = Date.now();
   markCurrentDot(problemIndex);
+
+  if (config.operation === 'div') {
+    startDivisionProblem(board, config.digitLength, stats => completeProblem(problemIndex, stats));
+    return;
+  }
 
   const opConfig = OPERATIONS[config.operation];
   const problem = opConfig.generate(config.digitLength);
@@ -392,21 +417,11 @@ function startProblem(problemIndex) {
     correctSteps: 0,
     firstTryCorrect: 0,
     mistakes: 0,
-    onComplete: () => {
-      run.totalFirstTryCorrect += state.firstTryCorrect;
-      run.totalSteps += state.steps.length;
-      run.totalMistakes += state.mistakes;
-      run.problemsCompleted++;
-      markDotResult(problemIndex, state.mistakes > 0);
-      playCelebration();
-      setTimeout(() => {
-        if (problemIndex + 1 < config.numProblems) {
-          startProblem(problemIndex + 1);
-        } else {
-          showAdvancedResults();
-        }
-      }, 500);
-    }
+    onComplete: () => completeProblem(problemIndex, {
+      firstTryCorrect: state.firstTryCorrect,
+      totalSteps: state.steps.length,
+      mistakes: state.mistakes
+    })
   };
   wireStep(state);
 }
@@ -480,9 +495,12 @@ export function initAdvancedSetup() {
 
   document.querySelectorAll('#advanced-numpad [data-digit]').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (!activeInput || activeInput.disabled) return;
-      activeInput.value = btn.dataset.digit;
-      activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+      const input = getActiveInput();
+      if (!input || input.disabled) return;
+      input.value = input.value.length < input.maxLength
+        ? input.value + btn.dataset.digit
+        : btn.dataset.digit;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
     });
   });
 }
