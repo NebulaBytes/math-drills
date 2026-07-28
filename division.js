@@ -195,6 +195,19 @@ export function startDivisionProblem(board, dividendLength, onComplete) {
             landingCell.style.gridRow = String(remainderRow);
             grid.appendChild(landingCell);
 
+            // The whole->decimal transition row jumps over the slim point
+            // column (nothing else in that row needs it), which otherwise
+            // reads as a broken gap between the remainder and the brought-
+            // down zero. Mark it with its own point so the gap is legible.
+            if (i === dividendLength - 1 && hasDecimalPoint) {
+              const rowPoint = document.createElement('div');
+              rowPoint.className = 'decimal-point';
+              rowPoint.textContent = '.';
+              rowPoint.style.gridColumn = String(dividendLength + 2);
+              rowPoint.style.gridRow = String(remainderRow);
+              grid.appendChild(rowPoint);
+            }
+
             const bringingDownRealDigit = i + 1 < dividendLength;
             if (bringingDownRealDigit) {
               flyArrowDown(dividendCells[i + 1], landingCell, String(step.bringDownDigit), () => {
