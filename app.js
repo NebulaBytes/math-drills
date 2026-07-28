@@ -265,7 +265,7 @@ function endSpeedRun() {
   const message = pickCelebrationMessage(accuracy);
   document.getElementById('speed-results-heading').textContent = message;
   showScreen('screen-speed-results');
-  celebrate(message);
+  celebrate(message, accuracy);
 }
 
 function initNumpad() {

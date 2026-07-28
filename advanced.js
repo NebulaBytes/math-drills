@@ -429,7 +429,7 @@ function showAdvancedResults() {
   const message = pickCelebrationMessage(accuracy);
   document.getElementById('advanced-results-heading').textContent = message;
   showScreen('screen-advanced-results');
-  celebrate(message);
+  celebrate(message, accuracy);
 }
 
 export function initAdvancedSetup() {
