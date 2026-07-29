@@ -547,8 +547,24 @@ h2 { text-align: center; font-size: 1.6rem; margin-bottom: 20px; }
 .result-box.correct { background: var(--green); color: white; border-color: var(--green); animation: pop 0.3s; }
 .result-box.wrong { animation: shake 0.4s; }
 .carry-box.active { border-color: var(--accent-2); box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb),0.3); }
-.carry-box.correct { background: var(--green); color: white; border-color: var(--green); }
+.carry-box.correct { background: var(--accent-3); color: #6b4e08; border-color: var(--accent-3); border-style: solid; animation: pop 0.3s; }
 .carry-box.wrong { animation: shake 0.4s; }
+
+.carry-box.used { opacity: 0.5; }
+.carry-box.used::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 1.5px),
+    #111 calc(50% - 1.5px),
+    #111 calc(50% + 1.5px),
+    transparent calc(50% + 1.5px)
+  );
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
 
 input.hidden-input {
   position: absolute;

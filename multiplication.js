@@ -220,6 +220,21 @@ export function startMultiplicationProblem(board, multiplicandLength, onComplete
     };
   }
 
+  // Once a carry has been folded into the next column's multiply/add, cross
+  // it out so students can see at a glance it's already been "spent" and
+  // isn't still waiting to be used.
+  function markCarryUsed(step) {
+    if (step.phase === 'pp') {
+      const pp = partialProducts[step.shift];
+      const i = step.col - step.shift;
+      if (i > 0 && i < mLen && pp.carryIn[i] > 0) {
+        ppCarryBoxes[step.shift][step.col].classList.add('used');
+      }
+    } else if (step.phase === 'sum' && sumTransferIn[step.col] > 0) {
+      sumCarryBoxes[step.col].classList.add('used');
+    }
+  }
+
   function runStep(idx) {
     if (idx >= allSteps.length) {
       setTimeout(() => onComplete(stats), 500);
@@ -231,7 +246,10 @@ export function startMultiplicationProblem(board, multiplicandLength, onComplete
     if (step.phase === 'pp' && step.col === step.shift + mLen) {
       box.style.visibility = 'visible';
     }
-    wireInput(box, step.expected, () => runStep(idx + 1));
+    wireInput(box, step.expected, () => {
+      markCarryUsed(step);
+      runStep(idx + 1);
+    });
   }
 
   runStep(0);

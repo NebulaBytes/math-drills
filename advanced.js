@@ -349,6 +349,9 @@ function wireStep(state) {
       playDing();
       state.correctSteps++;
       if (!missedThisStep) state.firstTryCorrect++;
+      if (state.operationKey === 'add' && step.type === 'result' && state.problem.transferIn[step.col] === 1) {
+        state.carryInputs[step.col].classList.add('used');
+      }
       state.stepIndex++;
       setTimeout(() => wireStep(state), 200);
     } else {
