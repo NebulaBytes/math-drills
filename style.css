@@ -454,6 +454,8 @@ h2 { text-align: center; font-size: 1.6rem; margin-bottom: 20px; }
   font-weight: 800;
   border-radius: var(--radius-sm);
   position: relative;
+  justify-self: center;
+  align-self: center;
 }
 .digit-box { background: var(--accent-tint); color: var(--accent-dark); transition: transform 0.1s, box-shadow 0.15s; }
 .digit-box.blank { visibility: hidden; }
@@ -606,6 +608,24 @@ input.hidden-input {
   gap: 6px 4px;
   align-items: center;
   font-family: 'Consolas', monospace;
+}
+
+.mult-board {
+  display: inline-grid;
+  gap: 6px 4px;
+  align-items: center;
+  font-family: 'Consolas', monospace;
+}
+
+.mult-divider { border-bottom: 4px solid var(--text); align-self: end; margin-bottom: 4px; }
+
+.op-sign {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--accent-dark);
+  justify-self: end;
+  align-self: center;
+  padding-right: 4px;
 }
 
 .quotient-box {

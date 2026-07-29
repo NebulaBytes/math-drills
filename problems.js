@@ -38,6 +38,26 @@ export function generateFact(operation, opts = {}) {
   }
 }
 
+// Shared column-addition-with-carry simulator: adds two digit arrays
+// (index 0 = ones place) of the given length, treating missing/undefined
+// positions as 0. Used directly by Carry-over Addition, and by Long
+// Multiplication's final "sum the partial products" phase - both are
+// exactly the same math.
+export function simulateColumnAddition(digitsA, digitsB, length) {
+  const transferIn = new Array(length).fill(0);
+  const transferOut = new Array(length).fill(0);
+  const resultDigit = new Array(length).fill(0);
+  let carry = 0;
+  for (let i = 0; i < length; i++) {
+    transferIn[i] = carry;
+    const sum = (digitsA[i] || 0) + (digitsB[i] || 0) + carry;
+    resultDigit[i] = sum % 10;
+    carry = sum >= 10 ? 1 : 0;
+    transferOut[i] = carry;
+  }
+  return { transferIn, transferOut, resultDigit, finalTransfer: carry };
+}
+
 export function generateCarryAddition(digitLength) {
   while (true) {
     const digitsA = [];
@@ -47,20 +67,10 @@ export function generateCarryAddition(digitLength) {
       digitsA.push(randInt(isLeading ? 1 : 0, 9));
       digitsB.push(randInt(isLeading ? 1 : 0, 9));
     }
-    const transferIn = new Array(digitLength).fill(0);
-    const transferOut = new Array(digitLength).fill(0);
-    const resultDigit = new Array(digitLength).fill(0);
-    let carry = 0;
-    for (let i = 0; i < digitLength; i++) {
-      transferIn[i] = carry;
-      const sum = digitsA[i] + digitsB[i] + carry;
-      resultDigit[i] = sum % 10;
-      carry = sum >= 10 ? 1 : 0;
-      transferOut[i] = carry;
-    }
+    const { transferIn, transferOut, resultDigit, finalTransfer } = simulateColumnAddition(digitsA, digitsB, digitLength);
     const hasAnyCarry = transferOut.some(c => c === 1);
     if (hasAnyCarry) {
-      return { digitsA, digitsB, transferIn, transferOut, resultDigit, finalTransfer: carry, digitLength };
+      return { digitsA, digitsB, transferIn, transferOut, resultDigit, finalTransfer, digitLength };
     }
   }
 }
@@ -165,4 +175,62 @@ export function generateLongDivision(dividendLength) {
   }
 
   return { divisor, dividendDigits, dividendLength, steps, finalRemainder: current, hasDecimalPoint, decimalDigitCount };
+}
+
+const MULTIPLIER_LENGTH = 2;
+
+export function generateLongMultiplication(multiplicandLength) {
+  while (true) {
+    const mLen = multiplicandLength;
+    const tLen = MULTIPLIER_LENGTH;
+    const totalCols = mLen + tLen;
+
+    const multiplicandDigits = [];
+    for (let i = 0; i < mLen; i++) {
+      multiplicandDigits.push(i === mLen - 1 ? randInt(1, 9) : randInt(0, 9));
+    }
+    const multiplierDigits = [];
+    for (let i = 0; i < tLen; i++) {
+      multiplierDigits.push(i === tLen - 1 ? randInt(1, 9) : randInt(0, 9));
+    }
+
+    // One partial product per multiplier digit: multiplicand x that single
+    // digit, worked out column by column exactly like single-digit
+    // multiplication-with-carry. shift = how many columns this partial
+    // product is offset left (its own multiplier digit's place value).
+    const partialProducts = multiplierDigits.map((multiplierDigit, shift) => {
+      const digits = [];
+      const carryIn = [];
+      const carryOut = [];
+      let carry = 0;
+      for (let i = 0; i < mLen; i++) {
+        carryIn.push(carry);
+        const product = multiplicandDigits[i] * multiplierDigit + carry;
+        digits.push(product % 10);
+        carry = Math.floor(product / 10);
+        carryOut.push(carry);
+      }
+      return { multiplierDigit, digits, carryIn, carryOut, finalCarry: carry, shift };
+    });
+
+    function shiftedDigits(pp) {
+      const arr = new Array(totalCols).fill(0);
+      pp.digits.forEach((d, i) => { arr[pp.shift + i] = d; });
+      if (pp.finalCarry > 0) arr[pp.shift + pp.digits.length] = pp.finalCarry;
+      return arr;
+    }
+
+    const { transferIn: sumTransferIn, transferOut: sumTransferOut, resultDigit: sumResultDigit, finalTransfer: sumFinalTransfer } =
+      simulateColumnAddition(shiftedDigits(partialProducts[0]), shiftedDigits(partialProducts[1]), totalCols);
+
+    const anyCarryAnywhere =
+      partialProducts.some(pp => pp.carryOut.some(c => c > 0) || pp.finalCarry > 0) ||
+      sumTransferOut.some(c => c === 1);
+    if (!anyCarryAnywhere) continue;
+
+    return {
+      multiplicandDigits, multiplierDigits, mLen, tLen, totalCols,
+      partialProducts, sumTransferIn, sumTransferOut, sumResultDigit, sumFinalTransfer
+    };
+  }
 }

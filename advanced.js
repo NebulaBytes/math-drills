@@ -4,6 +4,7 @@ import { showScreen } from './nav.js';
 import { celebrate, pickCelebrationMessage } from './celebrate.js';
 import { setActiveInput, getActiveInput } from './input-router.js';
 import { startDivisionProblem } from './division.js';
+import { startMultiplicationProblem } from './multiplication.js';
 
 function buildAdditionSteps(problem) {
   const { digitLength, transferOut, resultDigit } = problem;
@@ -74,6 +75,9 @@ const OPERATIONS = {
   },
   div: {
     label: 'Long Division'
+  },
+  mul: {
+    label: 'Long Multiplication'
   }
 };
 
@@ -397,6 +401,11 @@ function startProblem(problemIndex) {
 
   if (config.operation === 'div') {
     startDivisionProblem(board, config.digitLength, stats => completeProblem(problemIndex, stats));
+    return;
+  }
+
+  if (config.operation === 'mul') {
+    startMultiplicationProblem(board, config.digitLength, stats => completeProblem(problemIndex, stats));
     return;
   }
 
