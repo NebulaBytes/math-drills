@@ -186,6 +186,27 @@ body {
 }
 .icon-btn:active { transform: scale(0.9); }
 
+.star-badge {
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--accent-dark);
+  white-space: nowrap;
+}
+
+.email-parent-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.email-status { font-weight: 700; font-size: 0.9rem; color: var(--text-soft); min-height: 1.2em; }
+
 .screen { display: none; }
 .screen.active { display: block; animation: fadeIn 0.25s ease; }
 

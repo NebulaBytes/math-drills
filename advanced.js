@@ -5,6 +5,7 @@ import { celebrate, pickCelebrationMessage } from './celebrate.js';
 import { setActiveInput, getActiveInput } from './input-router.js';
 import { startDivisionProblem } from './division.js';
 import { startMultiplicationProblem } from './multiplication.js';
+import { addStars, starMultiplierForAccuracy } from './rewards.js';
 
 function buildAdditionSteps(problem) {
   const { digitLength, transferOut, resultDigit } = problem;
@@ -443,6 +444,8 @@ function showAdvancedResults() {
   const accuracy = run.totalSteps
     ? Math.round((run.totalFirstTryCorrect / run.totalSteps) * 100)
     : 100;
+  const stars = run.problemsCompleted * 5 * starMultiplierForAccuracy(accuracy);
+  addStars(stars, OPERATIONS[config.operation].label);
   const totalTime = formatTime(Date.now() - runStartTime);
   document.getElementById('advanced-results-activity').textContent = OPERATIONS[config.operation].label;
   document.getElementById('advanced-results-body').innerHTML = `

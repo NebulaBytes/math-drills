@@ -3,6 +3,8 @@ import { playDing, playBuzz, setMuted, isMuted } from './sounds.js';
 import { showScreen } from './nav.js';
 import { initAdvancedSetup } from './advanced.js';
 import { celebrate, pickCelebrationMessage } from './celebrate.js';
+import { addStars, renderStarBadge } from './rewards.js';
+import { sendParentEmail } from './email.js';
 
 const speedConfig = {
   operation: 'mul',
@@ -255,6 +257,7 @@ function advanceOrEnd() {
 function endSpeedRun() {
   clearInterval(tickInterval);
   const accuracy = speedRun.attempted ? Math.round((speedRun.score / speedRun.attempted) * 100) : 0;
+  addStars(speedRun.score, 'Speed Drill');
   document.getElementById('speed-results-body').innerHTML = `
     <div class="big-stat">${speedRun.score} / ${speedRun.attempted} correct</div>
     <div class="stat-row">
@@ -283,6 +286,22 @@ function initNumpad() {
   });
 }
 
+function initEmailParent() {
+  const btn = document.getElementById('btn-email-parent');
+  const status = document.getElementById('email-status');
+  btn.addEventListener('click', () => {
+    status.textContent = 'Sending...';
+    btn.disabled = true;
+    sendParentEmail()
+      .then(() => { status.textContent = '✅ Sent!'; })
+      .catch(err => { status.textContent = `❌ ${err.message}`; })
+      .finally(() => {
+        btn.disabled = false;
+        setTimeout(() => { status.textContent = ''; }, 4000);
+      });
+  });
+}
+
 document.querySelectorAll('.btn.secondary[data-home]').forEach(btn => {
   btn.addEventListener('click', () => showScreen('screen-home'));
 });
@@ -293,3 +312,5 @@ initTheme();
 initSpeedSetup();
 initNumpad();
 initAdvancedSetup();
+initEmailParent();
+renderStarBadge();

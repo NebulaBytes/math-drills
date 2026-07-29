@@ -7,7 +7,7 @@ const TIERS = [
   { min: 0, confetti: 15, messages: ['🌱 Keep practicing!', '👏 Nice try!', '💪 Keep going!'] }
 ];
 
-function getTier(accuracy) {
+export function getTier(accuracy) {
   return TIERS.find(t => accuracy >= t.min) || TIERS[TIERS.length - 1];
 }
 

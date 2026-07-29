@@ -17,6 +17,7 @@
   <header class="topbar">
     <h1 class="logo">🧮 Math Drills</h1>
     <div class="topbar-actions">
+      <span id="star-total-badge" class="star-badge">⭐ 0</span>
       <button id="btn-mute" class="icon-btn" title="Mute">🔊</button>
       <div class="theme-wrap">
         <button id="btn-theme" class="icon-btn" title="Theme">🎨</button>
@@ -71,6 +72,10 @@
           <span class="mode-title">Advanced Mode</span>
           <span class="mode-desc">Step-by-step multi-digit practice</span>
         </button>
+      </div>
+      <div class="email-parent-row">
+        <button id="btn-email-parent" class="btn secondary">📧 Email Parent</button>
+        <span id="email-status" class="email-status"></span>
       </div>
     </section>
 
@@ -261,6 +266,7 @@
 
   </main>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>
